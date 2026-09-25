@@ -1,0 +1,217 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "IndicatorProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for local visual/audio indicators.
+//
+// The service exposes persistent feedback preferences plus transient commands
+// for light patterns, RGB color, tones, and RTTTL playback.
+enum IndicatorMgmtGroupId {
+  INDICATOR_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  INDICATOR_MGMT_GROUP_ID_MESHBUS_INDICATOR = 68;
+}
+
+// Command IDs handled by the Meshbus indicator management group.
+enum IndicatorMgmtCommandId {
+  INDICATOR_MGMT_COMMAND_ID_CONFIG = 0;
+  INDICATOR_MGMT_COMMAND_ID_STATUS = 1;
+  INDICATOR_MGMT_COMMAND_ID_STOP = 2;
+  INDICATOR_MGMT_COMMAND_ID_CONFIG_RESET = 3;
+  INDICATOR_MGMT_COMMAND_ID_LIGHT_PLAY = 4;
+  INDICATOR_MGMT_COMMAND_ID_LIGHT_COLOR = 5;
+  INDICATOR_MGMT_COMMAND_ID_LIGHT_STOP = 6;
+  INDICATOR_MGMT_COMMAND_ID_BUZZER_PLAY = 7;
+  INDICATOR_MGMT_COMMAND_ID_BUZZER_RTTTL = 8;
+  INDICATOR_MGMT_COMMAND_ID_BUZZER_STOP = 9;
+  INDICATOR_MGMT_COMMAND_ID_LIGHT_IDLE_COLOR = 10;
+  INDICATOR_MGMT_COMMAND_ID_LIGHT_IDLE_PATTERN = 11;
+}
+
+// Persistent indicator configuration.
+message IndicatorConfig {
+  // Per-category light feedback routing.
+  message LightFeedback {
+    // Enable idle heartbeat light feedback.
+    bool heartbeat_enabled = 1;
+  }
+
+  // Per-category buzzer feedback routing.
+  message BuzzerFeedback {
+    // Enable buzzer feedback for received direct messages.
+    bool direct_message_enabled = 1;
+
+    // Enable buzzer feedback for received channel messages.
+    bool channel_message_enabled = 2;
+
+    // Enable buzzer feedback for system events such as key actions and
+    // explicit buzzer playback commands.
+    bool system_enabled = 3;
+  }
+
+  // Master enable for light feedback.
+  bool light_enabled = 1;
+
+  // Master enable for buzzer feedback.
+  bool buzzer_enabled = 2;
+
+  // Per-category light routing policy. `light_enabled` remains the master
+  // switch; this field controls which enabled categories may play.
+  LightFeedback light_feedback = 3;
+
+  // Per-category buzzer routing policy. `buzzer_enabled` remains the master
+  // switch; this field controls which enabled categories may play.
+  BuzzerFeedback buzzer_feedback = 4;
+}
+
+// Query current indicator status.
+message IndicatorStatusRequest {}
+
+// Snapshot of indicator configuration and hardware readiness.
+message IndicatorStatusResponse {
+  // Effective indicator configuration in use.
+  IndicatorConfig config = 1;
+
+  // True when light hardware/path is ready.
+  bool light_ready = 2;
+
+  // True when buzzer hardware/path is ready.
+  bool buzzer_ready = 3;
+}
+
+// Fetch the current indicator configuration.
+message IndicatorConfigGetRequest {}
+
+// Current effective indicator configuration.
+message IndicatorConfigGetResponse {
+  IndicatorConfig config = 1;
+}
+
+// Replace the full indicator configuration.
+message IndicatorConfigSetRequest {
+  IndicatorConfig config = 1;
+}
+
+// Effective indicator configuration after validation/application.
+message IndicatorConfigSetResponse {
+  IndicatorConfig config = 1;
+}
+
+// Restore indicator configuration defaults.
+message IndicatorConfigResetRequest {}
+
+// Effective indicator configuration after reset.
+message IndicatorConfigResetResponse {
+  IndicatorConfig config = 1;
+}
+
+// Stop both light and buzzer playback paths.
+message IndicatorStopRequest {}
+
+// Result of a global stop request.
+message IndicatorStopResponse {
+  bool stopped = 1;
+}
+
+// Play a blinking/pulsing light pattern.
+message IndicatorLightPlayRequest {
+  // LED on duration in milliseconds.
+  uint32 on_ms = 1;
+
+  // LED off duration in milliseconds.
+  uint32 off_ms = 2;
+
+  // Number of repetitions (`uint8_t` in the current implementation).
+  uint32 count = 3;
+}
+
+// Result of starting a light pattern.
+message IndicatorLightPlayResponse {
+  bool started = 1;
+}
+
+// Set a steady RGB color on the light output.
+message IndicatorLightColorRequest {
+  // Red component, interpreted as `uint8_t` by the implementation.
+  uint32 r = 1;
+
+  // Green component, interpreted as `uint8_t` by the implementation.
+  uint32 g = 2;
+
+  // Blue component, interpreted as `uint8_t` by the implementation.
+  uint32 b = 3;
+}
+
+// Result of applying a color request.
+message IndicatorLightColorResponse {
+  bool applied = 1;
+}
+
+// Set the RGB color used by idle/heartbeat light output.
+message IndicatorLightIdleColorRequest {
+  uint32 r = 1;
+  uint32 g = 2;
+  uint32 b = 3;
+}
+
+message IndicatorLightIdleColorResponse {
+  bool applied = 1;
+}
+
+// Set the idle/heartbeat light timing.
+message IndicatorLightIdlePatternRequest {
+  uint32 on_ms = 1;
+  uint32 off_ms = 2;
+}
+
+message IndicatorLightIdlePatternResponse {
+  bool applied = 1;
+}
+
+// Stop the current light pattern/output.
+message IndicatorLightStopRequest {}
+
+// Result of a light stop request.
+message IndicatorLightStopResponse {
+  bool stopped = 1;
+}
+
+// Play a single buzzer tone.
+message IndicatorBuzzerPlayRequest {
+  // Tone frequency in Hz.
+  uint32 freq_hz = 1;
+
+  // Tone duration in milliseconds.
+  uint32 duration_ms = 2;
+}
+
+// Result of starting a buzzer tone.
+message IndicatorBuzzerPlayResponse {
+  bool started = 1;
+}
+
+// Play a melody encoded as RTTTL text.
+message IndicatorBuzzerRtttlRequest {
+  // RTTTL string parsed by the local indicator service.
+  string rtttl = 1;
+}
+
+// Result of starting RTTTL playback.
+message IndicatorBuzzerRtttlResponse {
+  bool started = 1;
+}
+
+// Stop current buzzer playback.
+message IndicatorBuzzerStopRequest {}
+
+// Result of a buzzer stop request.
+message IndicatorBuzzerStopResponse {
+  bool stopped = 1;
+}

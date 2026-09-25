@@ -1,0 +1,237 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "RadioProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for radio configuration, diagnostics, and test helpers.
+//
+// `RadioConfigSetRequest` replaces the full radio configuration. Diagnostic
+// commands such as `calibrate`, `airtime`, and `score` are synchronous helpers
+// for tooling and factory/test flows. `continuous_wave` asynchronously accepts
+// the request and performs the RF operation after the MCUmgr response.
+enum RadioState {
+  // Radio is idle or sleeping.
+  RADIO_STATE_IDLE = 0;
+
+  // Radio is currently in receive mode.
+  RADIO_STATE_RECEIVE = 1;
+
+  // Radio is currently transmitting.
+  RADIO_STATE_TRANSMIT = 2;
+}
+
+// MCUmgr group ID for the Meshbus radio service.
+enum RadioMgmtGroupId {
+  RADIO_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  RADIO_MGMT_GROUP_ID_MESHBUS_RADIO = 71;
+}
+
+// Command IDs handled by the Meshbus radio management group.
+enum RadioMgmtCommandId {
+  RADIO_MGMT_COMMAND_ID_CONFIG = 0;
+  RADIO_MGMT_COMMAND_ID_STATUS = 1;
+  RADIO_MGMT_COMMAND_ID_CONFIG_RESET = 2;
+  RADIO_MGMT_COMMAND_ID_CALIBRATE = 3;
+  RADIO_MGMT_COMMAND_ID_AIRTIME = 4;
+  RADIO_MGMT_COMMAND_ID_SCORE = 5;
+  RADIO_MGMT_COMMAND_ID_AGC_RESET = 6;
+  RADIO_MGMT_COMMAND_ID_ENABLE = 7;
+  RADIO_MGMT_COMMAND_ID_SEND = 8;
+  RADIO_MGMT_COMMAND_ID_CONTINUOUS_WAVE = 9;
+}
+
+// Persistent radio configuration applied to the LoRa/PHY driver.
+message RadioConfig {
+  // Enables the radio service.
+  bool enabled = 1;
+
+  // RF center frequency in Hz.
+  // Valid runtime range: 400000000 .. 2500000000.
+  uint64 frequency = 2;
+
+  // Radio bandwidth in Hz.
+  // Common LoRa bandwidths include 62500, 125000, 250000, and 500000.
+  uint32 bandwidth = 3;
+
+  // LoRa spreading factor.
+  // Higher values trade throughput for sensitivity/range.
+  uint32 spread_factor = 4;
+
+  // LoRa coding-rate denominator.
+  // Values map to 4/N, so `5` means 4/5 and `8` means 4/8.
+  uint32 coding_rate = 5;
+
+  // Preamble length in symbols.
+  uint32 preamble_length = 6;
+
+  // Requested TX power in dBm.
+  // The current implementation validates 0 .. 22 dBm.
+  int32 tx_power = 7;
+
+  // When true, the radio stays receive-only and will not transmit packets.
+  bool receive_only = 8;
+
+  // Request receive-side sensitivity boost / lower-data-rate receive behavior.
+  bool rx_boosted = 9;
+
+  // Enable PHY-layer packet CRC generation/checking.
+  bool crc = 10;
+
+  // Enable periodic receive/sleep duty cycling, when supported by the driver.
+  bool duty_cycle = 11;
+
+  // Active receive window in milliseconds when `duty_cycle` is enabled.
+  uint32 duty_cycle_rx_time = 12;
+
+  // Sleep window in milliseconds when `duty_cycle` is enabled.
+  uint32 duty_cycle_sleep_time = 13;
+}
+
+// Fetch the current effective radio configuration.
+message RadioConfigGetRequest {}
+
+// Current effective radio configuration.
+message RadioConfigGetResponse {
+  RadioConfig config = 1;
+}
+
+// Replace the full radio configuration.
+message RadioConfigSetRequest {
+  RadioConfig config = 1;
+}
+
+// Effective radio configuration after validation/application.
+message RadioConfigSetResponse {
+  RadioConfig config = 1;
+}
+
+// Restore radio configuration defaults.
+message RadioConfigResetRequest {}
+
+// Effective radio configuration after reset.
+message RadioConfigResetResponse {
+  RadioConfig config = 1;
+}
+
+// Query current radio state and recent signal metrics.
+message RadioStatusRequest {}
+
+// Snapshot of current radio runtime state.
+message RadioStatusResponse {
+  // Effective radio configuration in use.
+  RadioConfig config = 1;
+
+  // Current radio state.
+  RadioState state = 2;
+
+  // Best-effort indication that the channel is currently active / mid-receive.
+  bool receiving = 3;
+
+  // RSSI of the most recently received packet, in dBm.
+  sint32 last_rssi_dbm = 4;
+
+  // SNR of the most recently received packet, in Q4 format (divide by 4 for dB).
+  sint32 last_snr_q4 = 5;
+
+  // Current calibrated noise floor estimate, in dBm.
+  sint32 noise_floor_dbm = 6;
+
+  // Instantaneous RSSI sample in dBm, when supported at the moment of the call.
+  optional sint32 rssi_inst_dbm = 7;
+}
+
+// Trigger noise-floor calibration.
+message RadioCalibrateRequest {
+  // Optional activity threshold above the measured noise floor, in dB.
+  optional sint32 threshold_db = 1;
+}
+
+// Calibration parameters actually applied.
+message RadioCalibrateResponse {
+  sint32 threshold_db = 1;
+}
+
+// Estimate airtime for a payload length using the current radio settings.
+message RadioAirtimeRequest {
+  // Payload length in bytes.
+  uint32 payload_len = 1;
+}
+
+// Estimated over-the-air time in milliseconds.
+message RadioAirtimeResponse {
+  uint32 airtime_ms = 1;
+}
+
+// Estimate packet quality for the current settings and payload size.
+message RadioScoreRequest {
+  // Input SNR in dB.
+  float snr_db = 1;
+
+  // Payload length in bytes.
+  uint32 payload_len = 2;
+}
+
+// Score returned by the radio quality heuristic.
+message RadioScoreResponse {
+  // Packet quality score scaled to 0..100.
+  uint32 score_percent = 1;
+}
+
+// Reset AGC state on the radio, when supported.
+message RadioAgcResetRequest {}
+
+// Result of an AGC reset request.
+message RadioAgcResetResponse {
+  bool reset = 1;
+}
+
+// Toggle the radio enable flag without replacing the rest of the config.
+message RadioEnableRequest {
+  bool enabled = 1;
+}
+
+// Effective radio configuration after applying the enable toggle.
+message RadioEnableResponse {
+  RadioConfig config = 1;
+}
+
+// Transmit one raw payload immediately through the radio test/send path.
+message RadioSendRequest {
+  // Raw bytes to transmit.
+  bytes payload = 1;
+}
+
+// Result of a raw transmit request.
+message RadioSendResponse {
+  // Number of payload bytes accepted by the local transmit path.
+  uint32 accepted_len = 1;
+}
+
+// Start a continuous-wave RF transmission for test/calibration purposes.
+message RadioContinuousWaveRequest {
+  // RF frequency in Hz.
+  uint32 frequency_hz = 1;
+
+  // Requested TX power in dBm.
+  sint32 tx_power_dbm = 2;
+
+  // Duration in seconds.
+  uint32 duration_s = 3;
+}
+
+// Result of an asynchronous continuous-wave submission.
+message RadioContinuousWaveResponse {
+  // Deprecated compatibility field. This indicates acceptance, not driver
+  // start or RF completion.
+  bool started = 1 [deprecated = true];
+
+  // True when the request was accepted for asynchronous execution.
+  bool accepted = 2;
+}

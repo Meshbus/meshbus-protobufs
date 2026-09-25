@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "LlextProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+enum LlextMgmtGroupId {
+  LLEXT_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  LLEXT_MGMT_GROUP_ID_MESHBUS_LLEXT = 77;
+}
+
+enum LlextMgmtCommandId {
+  LLEXT_MGMT_COMMAND_ID_CONFIG = 0;
+  LLEXT_MGMT_COMMAND_ID_CONFIG_RESET = 1;
+  LLEXT_MGMT_COMMAND_ID_HOST_INFO = 2;
+}
+
+message LlextConfig {
+  bool enabled = 1;
+}
+
+message LlextConfigGetRequest {}
+
+message LlextConfigGetResponse {
+  LlextConfig config = 1;
+}
+
+message LlextConfigSetRequest {
+  LlextConfig config = 1;
+}
+
+message LlextConfigSetResponse {
+  LlextConfig config = 1;
+}
+
+message LlextConfigResetRequest {}
+
+message LlextConfigResetResponse {
+  LlextConfig config = 1;
+}
+
+// Exact installed host identity for selecting its published EDK. Unsupported
+// firmware must reject this command rather than return a guessed identity.
+message LlextHostInfoRequest {}
+
+message LlextHostInfoResponse {
+  uint32 protocol_version = 1;
+  bytes device_id = 2;
+  string target = 3;
+  string build_revision = 4;
+  uint32 metadata_version = 5;
+  uint32 interface_abi = 6;
+  // SHA256 of the primary MCUboot image, through the end of its ordinary TLVs.
+  // Excludes slot padding/trailer; this is identity, not a signing assertion.
+  bytes image_sha256 = 7;
+}

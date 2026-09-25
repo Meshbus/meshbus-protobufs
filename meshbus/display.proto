@@ -1,0 +1,135 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "DisplayProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for the display service.
+enum DisplayMgmtGroupId {
+  DISPLAY_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  DISPLAY_MGMT_GROUP_ID_MESHBUS_DISPLAY = 74;
+}
+
+// Command IDs handled by the Meshbus display management group.
+enum DisplayMgmtCommandId {
+  DISPLAY_MGMT_COMMAND_ID_CONFIG = 0;
+  DISPLAY_MGMT_COMMAND_ID_STATUS = 1;
+  DISPLAY_MGMT_COMMAND_ID_ACTIVE = 2;
+  DISPLAY_MGMT_COMMAND_ID_CONFIG_RESET = 3;
+  DISPLAY_MGMT_COMMAND_ID_DUMP = 4;
+}
+
+// Persistent display configuration.
+message DisplayConfig {
+  // Display brightness as a percentage, 0 .. 100.
+  uint32 brightness = 1;
+
+  // Idle timeout in seconds before the display is put to sleep.
+  // `0` disables automatic sleep.
+  uint32 sleep_timeout = 2;
+
+  // Invert display colors, when supported by the panel driver.
+  bool invert = 3;
+}
+
+// Query current display status.
+message DisplayStatusRequest {}
+
+// Snapshot of display configuration and runtime readiness.
+message DisplayStatusResponse {
+  // Effective display configuration in use.
+  DisplayConfig config = 1;
+
+  // Current runtime active/on state.
+  bool active = 2;
+
+  // True when the display device is present and initialized.
+  bool device_ready = 3;
+}
+
+// Fetch the current display configuration.
+message DisplayConfigGetRequest {}
+
+// Current effective display configuration.
+message DisplayConfigGetResponse {
+  DisplayConfig config = 1;
+}
+
+// Replace the full display configuration.
+message DisplayConfigSetRequest {
+  DisplayConfig config = 1;
+}
+
+// Effective display configuration after validation/application.
+message DisplayConfigSetResponse {
+  DisplayConfig config = 1;
+}
+
+// Restore display configuration defaults.
+message DisplayConfigResetRequest {}
+
+// Effective display configuration after reset.
+message DisplayConfigResetResponse {
+  DisplayConfig config = 1;
+}
+
+// Force the display active/inactive at runtime without changing stored config.
+message DisplayActiveRequest {
+  bool active = 1;
+}
+
+// Effective runtime active state after the request.
+message DisplayActiveResponse {
+  bool active = 1;
+}
+
+// Pixel storage used by a display snapshot.
+enum DisplayDumpFormat {
+  DISPLAY_DUMP_FORMAT_UNSPECIFIED = 0;
+  // Byte index = (y / 8) * width + x; bit = y % 8, LSB first.
+  // Pixels are in physical panel coordinates, before output inversion.
+  DISPLAY_DUMP_FORMAT_SSD1306_PAGE = 1;
+}
+
+// Drawing orientation recorded with the frame; pixels are already transformed.
+// Clients must not rotate the returned physical-coordinate bitmap again.
+enum DisplayDumpOrientation {
+  DISPLAY_DUMP_ORIENTATION_HORIZONTAL = 0;
+  DISPLAY_DUMP_ORIENTATION_HORIZONTAL_FLIP = 1;
+  DISPLAY_DUMP_ORIENTATION_VERTICAL = 2;
+  DISPLAY_DUMP_ORIENTATION_VERTICAL_FLIP = 3;
+}
+
+// Read a chunk of the last complete software frame (MCUmgr READ, command 4).
+// snapshot_id=0 and offset=0 captures a new frozen snapshot and returns its
+// first chunk. A nonzero ID reads the same snapshot even while rendering
+// continues. One slot is shared by all clients: a successful new capture
+// replaces the previous ID. IDs are valid only within the current boot.
+// Retry chunks with the returned ID; stale IDs return MCUmgr ENOENT.
+message DisplayDumpRequest {
+  uint32 snapshot_id = 1;
+  uint32 offset = 2;
+  // 0 selects 256 bytes; otherwise 1..256. The final chunk may be shorter.
+  uint32 length = 3;
+}
+
+// No panel readback is performed. Blanking, brightness and hardware faults
+// cannot be inferred from these pixels. Offset must be less than total_size.
+message DisplayDumpResponse {
+  uint32 snapshot_id = 1;
+  uint32 offset = 2;
+  uint32 total_size = 3;
+  uint32 width = 4;
+  uint32 height = 5;
+  DisplayDumpFormat format = 6;
+  DisplayDumpOrientation orientation = 7;
+  bytes data = 8;
+  // Apply this inversion to raw pixels for the requested output polarity.
+  bool inverted = 9;
+}

@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*FirmwareMgmtGroupId int_size:8
+*FirmwareMgmtCommandId int_size:8
+*FirmwareUpdateKind int_size:8
+*FirmwareState int_size:8
+*FirmwareResult int_size:8
+*FirmwareStatusRequest.transfer_id max_size:32
+*FirmwareDeltaBeginRequest.manifest max_size:384
+*FirmwareDeltaBeginRequest.signature max_size:64
+*FirmwareDeltaWriteRequest.transfer_id max_size:32
+*FirmwareDeltaWriteRequest.data max_size:448
+*FirmwareTransferRequest.transfer_id max_size:32
+*FirmwareResponse.transfer_id max_size:32

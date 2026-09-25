@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*MeshcoreMgmtGroupId int_size:8
+*MeshcoreMgmtCommandId int_size:8
+*MeshcoreConfig.public_key max_size:32
+*MeshcoreConfig.private_key max_size:64
+*MeshcoreConfig.name max_size:32
+*MeshcoreConfig.flood_max int_size:8
+*MeshcoreConfig.multi_acks int_size:8
+*MeshcoreConfig.add_contact_config int_size:8
+*MeshcoreConfig.path_hash_size int_size:8
+*MeshcoreConfig.add_contact_hops_limit int_size:8
+*MeshcoreNodeDiscoverRequest.filter int_size:8
+*MeshcoreTraceRequest.path_hash_size int_size:8
+*MeshcoreTraceRequest.path max_size:64
+*MeshcoreChannelDataRequest.channel_index int_size:8
+*MeshcoreChannelDataRequest.path_len int_size:8
+*MeshcoreChannelDataRequest.path max_size:64
+*MeshcoreChannelDataRequest.data_type int_size:16
+*MeshcoreChannelDataRequest.payload max_size:165
+*MeshcoreAnonDataRequest.public_key max_size:32
+*MeshcoreAnonDataRequest.payload max_size:136
+*MeshcoreRawDataRequest.path_len int_size:8
+*MeshcoreRawDataRequest.path max_size:64
+*MeshcoreRawDataRequest.payload max_size:184
+*MeshcoreControlDataRequest.payload max_size:184
+*MeshcoreBinaryResponseRequest.route int_size:8
+*MeshcoreBinaryResponseRequest.public_key max_size:32
+*MeshcoreBinaryResponseRequest.path_len int_size:8
+*MeshcoreBinaryResponseRequest.path max_size:64
+*MeshcoreBinaryResponseRequest.payload max_size:163

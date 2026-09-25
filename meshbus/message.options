@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*MessageMgmtGroupId int_size:8
+*MessageMgmtCommandId int_size:8
+*MessageContent.target max_size:4
+*MessageContent.type int_size:8
+*MessageContent.route int_size:8
+*MessageContent.sender_name max_size:32
+*MessageContent.payload max_size:230
+*MessageSendNodeRequest.key_prefix max_size:5
+*MessageSendNodeRequest.message max_size:230
+*MessageSendNodeRequest.attempt int_size:8
+*MessageSendChannelRequest.channel_index int_size:8
+*MessageSendChannelRequest.message max_size:230

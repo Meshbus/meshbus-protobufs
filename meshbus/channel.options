@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*ChannelMgmtGroupId int_size:8
+*ChannelMgmtCommandId int_size:8
+*Channel.hash max_size:1
+*Channel.secret max_size:32
+*Channel.name max_size:32
+*ChannelGetRequest.index int_size:8
+*ChannelSetRequest.index int_size:8
+*ChannelSetRequest.secret max_size:32
+*ChannelSetRequest.name max_size:32
+*ChannelStoreCountResponse.count int_size:8
+*ChannelStoreSizeResponse.size int_size:8
+*ChannelNextFreeSlotResponse.index int_size:8
+*ChannelNextByHashRequest.hash max_size:1
+*ChannelNextByHashRequest.start_slot int_size:8
+*ChannelNextByHashResponse.index int_size:8
+*ChannelResetRequest.index int_size:8

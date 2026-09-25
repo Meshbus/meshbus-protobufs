@@ -1,0 +1,285 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "NotifyProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// High-level notify categories carried by the zbus event envelope.
+//
+// These values are intentionally coarse-grained:
+// - `NODES_CHANGED` means the local Contact store changed and clients should
+//   re-query Contact data if they need the latest snapshot.
+// - `MESSAGES_CHANGED` means the local message cache changed and clients should
+//   re-query the message service for updated list/detail state.
+// - `CHANNELS_CHANGED` means the local channel-slot store changed and clients
+//   should re-query channel data if they need the latest slot snapshot.
+// - path/trace/telemetry types are kept separate because they represent
+//   asynchronous responses to node request flows and may need dedicated UI
+//   handling.
+enum NotifyType {
+  // One or more contact records were created or updated locally.
+  // The protobuf payload may include the affected contact prefix. Reset events may
+  // omit it.
+  NOTIFY_TYPE_NODES_CHANGED = 0;
+  // A discover-path request completed and the payload carries the returned path
+  // summary.
+  NOTIFY_TYPE_NODE_DISCOVER_PATH = 1;
+  // A trace-path request completed and the payload carries the returned trace
+  // summary.
+  NOTIFY_TYPE_NODE_TRACE_PATH = 2;
+  // A telemetry response was observed for a known contact.
+  // The payload includes the contact prefix and raw telemetry bytes.
+  NOTIFY_TYPE_NODE_TELEMETRY = 3;
+  // The local message cache changed.
+  // The protobuf payload includes only a cache event summary.
+  NOTIFY_TYPE_MESSAGES_CHANGED = 4;
+  // The local channel-slot store changed.
+  NOTIFY_TYPE_CHANNELS_CHANGED = 5;
+
+  NOTIFY_TYPE_NODE_ADVERT = 6;
+
+  NOTIFY_TYPE_NODE_DISCOVER = 7;
+
+  // A management SMP response was observed locally.
+  NOTIFY_TYPE_MANAGEMENT_SMP = 8;
+
+  // A MeshCore explicit trace request completed.
+  NOTIFY_TYPE_MESHCORE_TRACE = 9;
+}
+
+// Encoded notify payload published by the Meshbus notify service.
+//
+// This message is not an MCUmgr request/response pair and is not intended to be
+// a full data model. It is serialized into the Meshbus notify event payload so
+// local subscribers can react to state changes without polling every service on
+// every event.
+//
+// The current design favors "small notify + follow-up query" where possible:
+// - contact updates may publish the affected contact prefix
+// - telemetry publishes the affected contact prefix plus raw telemetry payload
+// - message changes publish only a cache event kind
+// - channel changes may publish the affected secret prefix
+// - discover/trace path responses still carry their small result payloads
+//
+// Consumers that need full state should query the owning service after
+// receiving a notify.
+message Notify {
+  // Summary payload for a discover-path response.
+  //
+  // This is published when a previously accepted discover-path request
+  // completes. The path is still carried inline because it is the response
+  // content itself and is not otherwise cached behind a dedicated query API.
+  message NotifyNodeDiscoverPath {
+    // Target node public-key prefix this route report belongs to.
+    // When present, this is the fixed node prefix width configured by firmware.
+    bytes public_key_prefix = 1;
+
+    // Encoded forward repeater chain returned by the discover-path flow.
+    // This contains intermediate repeaters only: it does not include the local
+    // source node or the destination contact. For a contact reached through one
+    // repeater, `out_path` contains that repeater's path hash information only.
+    // An empty path means the target is a direct neighbor.
+    bytes out_path = 2;
+
+    // Per-hop forward path SNR values in Q4 format (divide by 4 for dB).
+    repeated sint32 out_path_snr = 3;
+
+    // Per-hop return path SNR values in Q4 format (divide by 4 for dB).
+    repeated sint32 return_path_snr = 4;
+
+    // Request correlation tag echoed by the discover-path response.
+    uint32 tag = 5;
+  }
+
+  // Summary payload for a trace-path response.
+  //
+  // Like discover-path, this remains a direct async response payload rather
+  // than a cache key for later lookup.
+  message NotifyNodeTracePath {
+    // Target node public-key prefix this trace report belongs to.
+    // When present, this is the fixed node prefix width configured by firmware.
+    bytes public_key_prefix = 1;
+
+    // Implementation-defined trace state code.
+    // See the node service for current meanings.
+    uint32 state = 2;
+
+    // Per-hop forward path SNR values in Q4 format (divide by 4 for dB).
+    repeated sint32 out_path_snr = 3;
+
+    // Per-hop return path SNR values in Q4 format (divide by 4 for dB).
+    repeated sint32 return_path_snr = 4;
+
+    // Request correlation tag echoed by the trace-path response.
+    uint32 tag = 5;
+  }
+
+  // Summary payload for a telemetry update.
+  //
+  // The raw telemetry payload is carried inline so subscribers can react
+  // without a follow-up node query.
+  message NotifyNodeTelemetry {
+    // Telemetry source node public-key prefix.
+    // When present, this is the fixed node prefix width configured by firmware.
+    bytes public_key_prefix = 1;
+
+    // Most recent raw telemetry payload observed for this contact.
+    bytes payload = 2;
+
+    // Request correlation tag echoed by the telemetry response.
+    uint32 tag = 3;
+  }
+
+  // Summary payload for contact create/update events.
+  //
+  // The notify layer does not distinguish create vs update on the wire anymore;
+  // both are represented as "nodes changed" and the client should re-query the
+  // contact store or fetch the contact by prefix.
+  message NotifyNodeChange {
+    // Contact public-key prefix that changed, when the change maps to one contact.
+    // This field may be omitted for broad reset events such as Contact store
+    // reset.
+    optional bytes public_key_prefix = 1;
+  }
+
+  message NotifyChannelChange {
+    // Channel secret prefix that changed, when the change maps to one channel.
+    // This field may be omitted for broad or prefix-less changes.
+    optional bytes secret_prefix = 1;
+  }
+
+  message NotifyNodeAdvert {
+    // Full advertised public key. This lets clients create a contact manually
+    // when the runtime reports a valid advert that local auto-add policy did
+    // not store.
+    bytes public_key = 1;
+
+    sint32 response_snr = 2;
+
+    bool has_position = 3;
+
+    int32 latitude = 4;
+
+    int32 longitude = 5;
+
+    // Advertised display name.
+    string name = 6;
+
+    // Advertised node role, encoded as ContactRole numeric value.
+    uint32 role = 7;
+
+    // True when this advert was not stored and clients should surface it as a
+    // manually-addable new contact.
+    bool is_new = 8;
+
+    // Sender advert timestamp carried by the received advert packet.
+    uint32 advert_timestamp = 9;
+
+    // True when path metadata was available at receive time.
+    bool has_out_path = 10;
+
+    // Runtime path bytes observed with the advert, when available.
+    bytes out_path = 11;
+
+    // Per-hop path hash size used to interpret `out_path`.
+    uint32 path_hash_size = 12;
+  }
+
+  message NotifyNodeDiscover {
+    // Request correlation tag echoed by the node-discover response.
+    uint32 tag = 1;
+
+    // Full discovered node public key.
+    bytes public_key = 2;
+
+    // Discovered node role, encoded as ContactRole numeric value.
+    uint32 role = 3;
+
+    // Encoded response source path.
+    bytes path = 4;
+
+    // SNR measured by the responder when it received the request.
+    sint32 uplink_snr = 5;
+
+    // SNR measured locally when this node received the response.
+    sint32 downlink_snr = 6;
+  }
+
+  message NotifyManagementSmp {
+    // Request correlation tag returned by ManagementSmpExchangeResponse.
+    uint32 tag = 1;
+
+    // Complete remote SMP response packet.
+    bytes response = 2;
+  }
+
+  message NotifyMeshcoreTrace {
+    // Request correlation tag echoed by the trace response.
+    uint32 tag = 1;
+
+    // Implementation-defined trace state code.
+    uint32 state = 2;
+
+    // Per-hop forward path SNR values in Q4 format (divide by 4 for dB).
+    repeated sint32 out_path_snr = 3;
+
+    // Per-hop return path SNR values in Q4 format (divide by 4 for dB).
+    repeated sint32 return_path_snr = 4;
+  }
+
+  // Summary payload for message-cache changes.
+  //
+  // This notify does not carry message details. It only tells subscribers what
+  // kind of cache transition happened so they can decide whether to refresh the
+  // message list, unread count, or other derived UI state from the message
+  // service.
+  message NotifyMessageChange {
+    // Cache event that triggered the notification.
+    enum MessageStateEvent {
+      // Local device stored an incoming message record.
+      MESSAGE_STATE_EVENT_RECV = 0;
+
+      // Delivery acknowledgment was observed for an outgoing message.
+      MESSAGE_STATE_EVENT_ACK = 1;
+    }
+
+    // Message cache state event.
+    MessageStateEvent event = 1;
+
+    // Stable local ACK token for an outgoing message delivery acknowledgment.
+    // Present only when `event` is `MESSAGE_STATE_EVENT_ACK`.
+    optional fixed64 ack_token = 2;
+  }
+
+  // Variant payload matched to the zbus envelope type.
+  //
+  // The outer `NotifyType` is the primary routing signal. This `oneof` carries
+  // the small protobuf body associated with that event category.
+  oneof payload_variant {
+    // Used with `NOTIFY_TYPE_NODES_CHANGED`.
+    NotifyNodeChange node = 1;
+    // Used with `NOTIFY_TYPE_NODE_DISCOVER_PATH`.
+    NotifyNodeDiscoverPath node_discover_path = 2;
+    // Used with `NOTIFY_TYPE_NODE_TRACE_PATH`.
+    NotifyNodeTracePath node_trace_path = 3;
+    // Used with `NOTIFY_TYPE_NODE_TELEMETRY`.
+    NotifyNodeTelemetry node_telemetry = 4;
+    // Used with `NOTIFY_TYPE_MESSAGES_CHANGED`.
+    NotifyMessageChange message = 5;
+    // Used with `NOTIFY_TYPE_CHANNELS_CHANGED`.
+    NotifyChannelChange channel = 6;
+    // Used with `NOTIFY_TYPE_NODE_ADVERT`.
+    NotifyNodeAdvert node_advert = 7;
+    // Used with `NOTIFY_TYPE_NODE_DISCOVER`.
+    NotifyNodeDiscover node_discover = 8;
+    // Used with `NOTIFY_TYPE_MANAGEMENT_SMP`.
+    NotifyManagementSmp management_smp = 9;
+    // Used with `NOTIFY_TYPE_MESHCORE_TRACE`.
+    NotifyMeshcoreTrace meshcore_trace = 10;
+  }
+}

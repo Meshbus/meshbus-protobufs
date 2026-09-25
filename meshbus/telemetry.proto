@@ -1,0 +1,207 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "TelemetryProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for the local telemetry/sensor service.
+//
+// This group exposes configuration for periodic sampling and a synchronous read
+// API that maps directly to Zephyr sensor channels.
+enum TelemetryMgmtGroupId {
+  TELEMETRY_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  TELEMETRY_MGMT_GROUP_ID_MESHBUS_TELEMETRY = 72;
+}
+
+// Command IDs handled by the Meshbus telemetry management group.
+enum TelemetryMgmtCommandId {
+  TELEMETRY_MGMT_COMMAND_ID_CONFIG = 0;
+  TELEMETRY_MGMT_COMMAND_ID_STATUS = 1;
+  TELEMETRY_MGMT_COMMAND_ID_READ = 2;
+  TELEMETRY_MGMT_COMMAND_ID_TRIGGER = 3;
+  TELEMETRY_MGMT_COMMAND_ID_CONFIG_RESET = 4;
+  TELEMETRY_MGMT_COMMAND_ID_ENABLE = 5;
+}
+
+// Logical telemetry channels. Values intentionally match Zephyr's
+// `enum sensor_channel`. Firmware compile-time checks keep this schema and the
+// devicetree constants synchronized with the Zephyr version in use.
+enum TelemetryChannelId {
+  TELEMETRY_CHANNEL_ID_ACCEL_X = 0;
+  TELEMETRY_CHANNEL_ID_ACCEL_Y = 1;
+  TELEMETRY_CHANNEL_ID_ACCEL_Z = 2;
+  TELEMETRY_CHANNEL_ID_ACCEL_XYZ = 3;
+  TELEMETRY_CHANNEL_ID_GYRO_X = 4;
+  TELEMETRY_CHANNEL_ID_GYRO_Y = 5;
+  TELEMETRY_CHANNEL_ID_GYRO_Z = 6;
+  TELEMETRY_CHANNEL_ID_GYRO_XYZ = 7;
+  TELEMETRY_CHANNEL_ID_MAGN_X = 8;
+  TELEMETRY_CHANNEL_ID_MAGN_Y = 9;
+  TELEMETRY_CHANNEL_ID_MAGN_Z = 10;
+  TELEMETRY_CHANNEL_ID_MAGN_XYZ = 11;
+  TELEMETRY_CHANNEL_ID_DIE_TEMP = 12;
+  TELEMETRY_CHANNEL_ID_AMBIENT_TEMP = 13;
+  TELEMETRY_CHANNEL_ID_PRESS = 14;
+  TELEMETRY_CHANNEL_ID_PROX = 15;
+  TELEMETRY_CHANNEL_ID_HUMIDITY = 16;
+  TELEMETRY_CHANNEL_ID_AMBIENT_LIGHT = 17;
+  TELEMETRY_CHANNEL_ID_LIGHT = 18;
+  TELEMETRY_CHANNEL_ID_IR = 19;
+  TELEMETRY_CHANNEL_ID_RED = 20;
+  TELEMETRY_CHANNEL_ID_GREEN = 21;
+  TELEMETRY_CHANNEL_ID_BLUE = 22;
+  TELEMETRY_CHANNEL_ID_ALTITUDE = 23;
+  TELEMETRY_CHANNEL_ID_PM_ONE_CF = 24;
+  TELEMETRY_CHANNEL_ID_PM_TWO_POINT_FIVE_CF = 25;
+  TELEMETRY_CHANNEL_ID_PM_TEN_CF = 26;
+  TELEMETRY_CHANNEL_ID_PM_ONE = 27;
+  TELEMETRY_CHANNEL_ID_PM_TWO_POINT_FIVE = 28;
+  TELEMETRY_CHANNEL_ID_PM_TEN = 29;
+  TELEMETRY_CHANNEL_ID_PM_ZERO_POINT_THREE_COUNT = 30;
+  TELEMETRY_CHANNEL_ID_PM_ZERO_POINT_FIVE_COUNT = 31;
+  TELEMETRY_CHANNEL_ID_PM_ONE_COUNT = 32;
+  TELEMETRY_CHANNEL_ID_PM_TWO_POINT_FIVE_COUNT = 33;
+  TELEMETRY_CHANNEL_ID_PM_FIVE_COUNT = 34;
+  TELEMETRY_CHANNEL_ID_PM_TEN_COUNT = 35;
+  TELEMETRY_CHANNEL_ID_DISTANCE = 36;
+  TELEMETRY_CHANNEL_ID_CO2 = 37;
+  TELEMETRY_CHANNEL_ID_O2 = 38;
+  TELEMETRY_CHANNEL_ID_VOC = 39;
+  TELEMETRY_CHANNEL_ID_GAS_RES = 40;
+  TELEMETRY_CHANNEL_ID_FLOW_RATE = 41;
+  TELEMETRY_CHANNEL_ID_VOLUME = 42;
+  TELEMETRY_CHANNEL_ID_VOLTAGE = 43;
+  TELEMETRY_CHANNEL_ID_VSHUNT = 44;
+  TELEMETRY_CHANNEL_ID_CURRENT = 45;
+  TELEMETRY_CHANNEL_ID_POWER = 46;
+  TELEMETRY_CHANNEL_ID_RESISTANCE = 47;
+  TELEMETRY_CHANNEL_ID_ROTATION = 48;
+  TELEMETRY_CHANNEL_ID_POS_DX = 49;
+  TELEMETRY_CHANNEL_ID_POS_DY = 50;
+  TELEMETRY_CHANNEL_ID_POS_DZ = 51;
+  TELEMETRY_CHANNEL_ID_POS_DXYZ = 52;
+  TELEMETRY_CHANNEL_ID_RPM = 53;
+  TELEMETRY_CHANNEL_ID_FREQUENCY = 54;
+  TELEMETRY_CHANNEL_ID_GAUGE_VOLTAGE = 55;
+  TELEMETRY_CHANNEL_ID_GAUGE_AVG_CURRENT = 56;
+  TELEMETRY_CHANNEL_ID_GAUGE_STDBY_CURRENT = 57;
+  TELEMETRY_CHANNEL_ID_GAUGE_MAX_LOAD_CURRENT = 58;
+  TELEMETRY_CHANNEL_ID_GAUGE_TEMP = 59;
+  TELEMETRY_CHANNEL_ID_GAUGE_STATE_OF_CHARGE = 60;
+  TELEMETRY_CHANNEL_ID_GAUGE_FULL_CHARGE_CAPACITY = 61;
+  TELEMETRY_CHANNEL_ID_GAUGE_REMAINING_CHARGE_CAPACITY = 62;
+  TELEMETRY_CHANNEL_ID_GAUGE_NOM_AVAIL_CAPACITY = 63;
+  TELEMETRY_CHANNEL_ID_GAUGE_FULL_AVAIL_CAPACITY = 64;
+  TELEMETRY_CHANNEL_ID_GAUGE_AVG_POWER = 65;
+  TELEMETRY_CHANNEL_ID_GAUGE_STATE_OF_HEALTH = 66;
+  TELEMETRY_CHANNEL_ID_GAUGE_TIME_TO_EMPTY = 67;
+  TELEMETRY_CHANNEL_ID_GAUGE_TIME_TO_FULL = 68;
+  TELEMETRY_CHANNEL_ID_GAUGE_CYCLE_COUNT = 69;
+  TELEMETRY_CHANNEL_ID_GAUGE_DESIGN_VOLTAGE = 70;
+  TELEMETRY_CHANNEL_ID_GAUGE_DESIRED_VOLTAGE = 71;
+  TELEMETRY_CHANNEL_ID_GAUGE_DESIRED_CHARGING_CURRENT = 72;
+  TELEMETRY_CHANNEL_ID_GAME_ROTATION_VECTOR = 73;
+  TELEMETRY_CHANNEL_ID_GRAVITY_VECTOR = 74;
+  TELEMETRY_CHANNEL_ID_GBIAS_XYZ = 75;
+  TELEMETRY_CHANNEL_ID_ENCODER_COUNT = 76;
+  TELEMETRY_CHANNEL_ID_ENCODER_REVOLUTIONS = 77;
+}
+
+// Global telemetry sampling policy.
+message TelemetryConfig {
+  // Enables background telemetry sampling and publication.
+  bool enabled = 1;
+
+  // Sampling interval in milliseconds for periodic telemetry collection.
+  // The minimum accepted interval is defined by the firmware target.
+  uint32 sample_interval = 2;
+}
+
+// Query telemetry service status and statically configured channels.
+message TelemetryStatusRequest {}
+
+// Current sampling policy plus the devicetree-configured channel IDs.
+message TelemetryStatusResponse {
+  TelemetryConfig config = 1;
+
+  // Provider identities remain firmware-internal. A client reads channels by
+  // ID and never selects or persists a provider at runtime.
+  repeated TelemetryChannelId channels = 2;
+}
+
+// Fetch the current telemetry configuration.
+message TelemetryConfigGetRequest {}
+
+// Current effective telemetry configuration.
+message TelemetryConfigGetResponse {
+  TelemetryConfig config = 1;
+}
+
+// Replace the full telemetry configuration.
+message TelemetryConfigSetRequest {
+  TelemetryConfig config = 1;
+}
+// Effective telemetry configuration after validation/application.
+message TelemetryConfigSetResponse {
+  TelemetryConfig config = 1;
+}
+
+// Restore telemetry configuration defaults.
+message TelemetryConfigResetRequest {}
+
+// Effective telemetry configuration after reset.
+message TelemetryConfigResetResponse {
+  TelemetryConfig config = 1;
+}
+
+// Read the latest values for one Zephyr sensor channel.
+message TelemetryReadRequest {
+  // ACCEL_X is the protobuf default (zero). Omitting this non-optional field
+  // selects ACCEL_X.
+  TelemetryChannelId channel_id = 1;
+}
+
+// One scalar sensor value represented in Zephyr `struct sensor_value` form.
+message TelemetrySensorValue {
+  // Whole-number component.
+  sint32 integer = 1;
+
+  // Fractional component in micro-units (`val2` in Zephyr sensor_value).
+  sint32 fractional_micro = 2;
+}
+
+// Result of a synchronous telemetry read.
+message TelemetryReadResponse {
+  // Echo of the requested logical channel ID.
+  TelemetryChannelId channel_id = 1;
+
+  // Number of valid entries in `values`.
+  uint32 value_count = 2;
+
+  // Channel values in the same order returned by the driver/service.
+  repeated TelemetrySensorValue values = 3;
+}
+
+// Trigger an immediate telemetry sample cycle.
+message TelemetryTriggerRequest {}
+
+// Result of an immediate sample trigger request.
+message TelemetryTriggerResponse {
+  bool triggered = 1;
+}
+
+// Toggle telemetry enable state without replacing the rest of the config.
+message TelemetryEnableRequest {
+  bool enabled = 1;
+}
+
+// Effective telemetry configuration after applying the enable toggle.
+message TelemetryEnableResponse {
+  TelemetryConfig config = 1;
+}

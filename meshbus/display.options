@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*DisplayMgmtGroupId int_size:8
+*DisplayMgmtCommandId int_size:8
+*DisplayDumpFormat int_size:8
+*DisplayDumpOrientation int_size:8
+*DisplayDumpResponse.data max_size:256

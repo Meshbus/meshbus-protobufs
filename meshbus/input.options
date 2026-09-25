@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*InputMgmtGroupId int_size:8
+*InputMgmtCommandId int_size:8
+*InputStatusResponse.long_press_ms int_size:16
+*InputStatusResponse.debounce_ms int_size:16
+*InputStatusResponse.encoder_step_threshold int_size:8
+*InputStatusResponse.repeat_delay_ms int_size:16
+*InputStatusResponse.repeat_interval_ms int_size:16
+*InputInjectActRequest.type int_size:8
+*InputInjectActRequest.code int_size:16
+*InputInjectActRequest.action int_size:8
+*InputInjectRawRequest.type int_size:8
+*InputInjectRawRequest.code int_size:16

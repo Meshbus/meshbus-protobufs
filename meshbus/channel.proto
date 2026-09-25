@@ -1,0 +1,121 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "ChannelProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for the Meshbus channel service.
+//
+// This group manages channel records stored on the device.
+enum ChannelMgmtGroupId {
+  CHANNEL_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  CHANNEL_MGMT_GROUP_ID_MESHBUS_CHANNEL = 66;
+}
+
+// Command IDs handled by the Meshbus channel management group.
+enum ChannelMgmtCommandId {
+  CHANNEL_MGMT_COMMAND_ID_GET = 0;
+  CHANNEL_MGMT_COMMAND_ID_SET = 1;
+  CHANNEL_MGMT_COMMAND_ID_RESET = 2;
+  CHANNEL_MGMT_COMMAND_ID_STORE_COUNT = 3;
+  CHANNEL_MGMT_COMMAND_ID_STORE_SIZE = 4;
+  CHANNEL_MGMT_COMMAND_ID_NEXT_FREE_SLOT = 5;
+  CHANNEL_MGMT_COMMAND_ID_NEXT_BY_HASH = 6;
+}
+
+// Stored channel definition.
+//
+// A channel is identified by its secret bytes. The packet format also carries a
+// 1-byte hash derived from the secret for mesh transport lookup.
+//
+// This protobuf message is a settings/mgmt boundary format. It is not the
+// public runtime C API type exposed by `include/channel/channel.h`.
+message Channel {
+  // Channel hash as used by the mesh packet header.
+  bytes hash = 1;
+
+  // Full channel secret.
+  // Current channel APIs accept 16-byte and 32-byte secrets.
+  bytes secret = 2;
+
+  // Human-readable display name.
+  // The Nanopb profile allows at most 31 UTF-8 bytes plus a terminating NUL.
+  string name = 3;
+
+}
+
+// Lookup a channel by stable local slot index.
+message ChannelGetRequest {
+  // Zero-based local channel slot index.
+  uint32 index = 1;
+}
+
+// Channel record stored at the requested slot index.
+message ChannelGetResponse {
+  Channel channel = 1;
+}
+
+// Query current channel-store record count.
+message ChannelStoreCountRequest {}
+
+// Current number of channel records in use.
+message ChannelStoreCountResponse {
+  uint32 count = 1;
+}
+
+// Query configured channel-store capacity.
+message ChannelStoreSizeRequest {}
+
+// Maximum number of channel records supported by the build.
+message ChannelStoreSizeResponse {
+  uint32 size = 1;
+}
+
+// Query first free channel slot index.
+message ChannelNextFreeSlotRequest {}
+
+// First free channel slot index, or store size when full.
+message ChannelNextFreeSlotResponse {
+  uint32 index = 1;
+}
+
+// Find the next stable channel slot matching a one-byte mesh hash.
+message ChannelNextByHashRequest {
+  bytes hash = 1;
+  uint32 start_slot = 2;
+}
+
+message ChannelNextByHashResponse {
+  uint32 index = 1;
+  Channel channel = 2;
+}
+
+// Set a channel slot record.
+message ChannelSetRequest {
+  // Zero-based local channel slot index.
+  uint32 index = 1;
+
+  // Full channel secret.
+  bytes secret = 2;
+
+  // Replacement display name. Empty means use default naming.
+  string name = 3;
+}
+
+// Result of a channel slot set request.
+message ChannelSetResponse {}
+
+// Reset a channel slot by local slot index.
+message ChannelResetRequest {
+  // Zero-based local channel slot index.
+  uint32 index = 1;
+}
+
+// Result of a channel slot reset request.
+message ChannelResetResponse {}

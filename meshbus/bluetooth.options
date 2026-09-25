@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*BluetoothState int_size:8
+*BluetoothMgmtGroupId int_size:8
+*BluetoothMgmtCommandId int_size:8
+*BluetoothConfig.passkey_mode int_size:8
+*BluetoothStatusResponse.state int_size:8
+*BluetoothStatusResponse.peer_address_str max_size:32
+*BluetoothStatusResponse.security int_size:8
+*BluetoothStatusResponse.bond_count int_size:8

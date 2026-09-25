@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "InputProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for input-device inspection and synthetic input injection.
+//
+// The numeric `type`, `code`, and `action` fields intentionally mirror Zephyr's
+// input subsystem so remote tools can inject button/encoder/keypad events.
+enum InputMgmtGroupId {
+  INPUT_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  INPUT_MGMT_GROUP_ID_MESHBUS_INPUT = 76;
+}
+
+// Command IDs handled by the Meshbus input management group.
+enum InputMgmtCommandId {
+  INPUT_MGMT_COMMAND_ID_STATUS = 0;
+  INPUT_MGMT_COMMAND_ID_INJECT_ACT = 1;
+  INPUT_MGMT_COMMAND_ID_INJECT_RAW = 2;
+}
+
+// Query current input-service capabilities and thresholds.
+message InputStatusRequest {}
+
+// Snapshot of enabled input sources and compile-time thresholds.
+message InputStatusResponse {
+  // True when the button driver/path is enabled in this build.
+  bool button_enabled = 1;
+
+  // True when the rotary encoder driver/path is enabled in this build.
+  bool encoder_enabled = 2;
+
+  // True when the keypad driver/path is enabled in this build.
+  bool keypad_enabled = 3;
+
+  // Long-press threshold in milliseconds.
+  uint32 long_press_ms = 4;
+
+  // Debounce threshold in milliseconds.
+  uint32 debounce_ms = 5;
+
+  // Encoder step threshold used by the local input interpretation logic.
+  uint32 encoder_step_threshold = 6;
+
+  // Delay before a held keypad key begins repeating, in milliseconds.
+  uint32 repeat_delay_ms = 7;
+
+  // Interval between held-key repeat events, in milliseconds.
+  uint32 repeat_interval_ms = 8;
+}
+
+// Inject a high-level action event into the input subsystem.
+message InputInjectActRequest {
+  // Zephyr input event type (`uint8_t` on the device).
+  uint32 type = 1;
+
+  // Zephyr input code (`uint16_t` on the device).
+  uint32 code = 2;
+
+  // Zephyr input action enum (`INPUT_ACT_*`).
+  uint32 action = 3;
+}
+
+// Result of an action-injection request.
+message InputInjectActResponse {
+  bool accepted = 1;
+}
+
+// Inject a raw input value event into the input subsystem.
+message InputInjectRawRequest {
+  // Zephyr input event type (`uint8_t` on the device).
+  uint32 type = 1;
+
+  // Zephyr input code (`uint16_t` on the device).
+  uint32 code = 2;
+
+  // Raw signed value associated with the event.
+  sint32 value = 3;
+}
+
+// Result of a raw-value injection request.
+message InputInjectRawResponse {
+  bool accepted = 1;
+}

@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*PowerMgmtGroupId int_size:8
+*PowerMgmtCommandId int_size:8
+*PowerStatusResponse.voltage_mv int_size:16
+*PowerStatusResponse.soc_percent int_size:8
+*PowerStatusResponse.temperature_dk int_size:16

@@ -1,0 +1,131 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "BluetoothProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for the Bluetooth control service.
+//
+// The service exposes a full configuration object plus lightweight status and
+// enable/disable helpers.
+enum BluetoothState {
+  // Bluetooth service is disabled in the local configuration.
+  BLUETOOTH_STATE_DISABLED = 0;
+
+  // Bluetooth is enabled but no LE connection is currently active.
+  BLUETOOTH_STATE_DISCONNECTED = 1;
+
+  // An LE connection exists but security pairing/bonding is still in progress.
+  BLUETOOTH_STATE_PAIRING = 2;
+
+  // An LE connection is active and has reached the target security level.
+  BLUETOOTH_STATE_CONNECTED = 3;
+}
+
+// MCUmgr group ID for the Meshbus Bluetooth service.
+enum BluetoothMgmtGroupId {
+  BLUETOOTH_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  BLUETOOTH_MGMT_GROUP_ID_MESHBUS_BLUETOOTH = 73;
+}
+
+// Command IDs handled by the Meshbus Bluetooth management group.
+enum BluetoothMgmtCommandId {
+  BLUETOOTH_MGMT_COMMAND_ID_CONFIG = 0;
+  BLUETOOTH_MGMT_COMMAND_ID_STATUS = 1;
+  BLUETOOTH_MGMT_COMMAND_ID_CONFIG_RESET = 2;
+  BLUETOOTH_MGMT_COMMAND_ID_ENABLE = 3;
+}
+
+// Persistent Bluetooth configuration.
+message BluetoothConfig {
+  // Enables the Bluetooth service.
+  bool enabled = 1;
+
+  // Pairing passkey policy.
+  enum BluetoothPasskeyMode {
+    // Generate/show a random passkey during pairing.
+    RANDOM = 0;
+
+    // Always use `fixed_passkey` during pairing.
+    FIXED  = 1;
+  }
+
+  // Passkey policy used for pairing.
+  BluetoothPasskeyMode passkey_mode = 2;
+
+  // Fixed six-digit passkey (0 .. 999999).
+  // Only used when `passkey_mode` is `FIXED`.
+  uint32 fixed_passkey = 3;
+
+  // Enables MeshCore Companion discovery and responses over BLE.
+  // When enabled, the Bluetooth service advertises the Nordic UART Service
+  // with a MeshCore-compatible device name. When disabled, the static NUS
+  // GATT service remains registered but Companion RX/TX is ignored.
+  bool meshcore_companion_enabled = 4;
+}
+
+// Query current Bluetooth status.
+message BluetoothStatusRequest {}
+
+// Snapshot of Bluetooth configuration and connection state.
+message BluetoothStatusResponse {
+  // Effective Bluetooth configuration in use.
+  BluetoothConfig config = 1;
+
+  // Derived Bluetooth state.
+  BluetoothState state = 2;
+
+  // True when at least one LE connection is currently active.
+  bool connected = 3;
+
+  // Peer address string for the active connection, when available.
+  optional string peer_address_str = 4;
+
+  // Zephyr Bluetooth security level for the active connection, when connected.
+  optional uint32 security = 5;
+
+  // Number of locally stored bonds.
+  uint32 bond_count = 6;
+}
+
+// Fetch the current Bluetooth configuration.
+message BluetoothConfigGetRequest {}
+
+// Current effective Bluetooth configuration.
+message BluetoothConfigGetResponse {
+  BluetoothConfig config = 1;
+}
+
+// Replace the full Bluetooth configuration.
+message BluetoothConfigSetRequest {
+  BluetoothConfig config = 1;
+}
+
+// Effective Bluetooth configuration after validation/application.
+message BluetoothConfigSetResponse {
+  BluetoothConfig config = 1;
+}
+
+// Restore Bluetooth configuration defaults.
+message BluetoothConfigResetRequest {}
+
+// Effective Bluetooth configuration after reset.
+message BluetoothConfigResetResponse {
+  BluetoothConfig config = 1;
+}
+
+// Toggle Bluetooth enable state without replacing the rest of the config.
+message BluetoothEnableRequest {
+  bool enabled = 1;
+}
+
+// Effective Bluetooth configuration after applying the enable toggle.
+message BluetoothEnableResponse {
+  BluetoothConfig config = 1;
+}

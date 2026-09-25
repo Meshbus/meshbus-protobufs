@@ -1,0 +1,107 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "DesktopProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for desktop/debug utility endpoints.
+enum DesktopMgmtGroupId {
+  DESKTOP_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  DESKTOP_MGMT_GROUP_ID_MESHBUS_DESKTOP = 78;
+}
+
+// Command IDs handled by the Meshbus desktop utility group.
+enum DesktopMgmtCommandId {
+  DESKTOP_MGMT_COMMAND_ID_STATUS = 0;
+  DESKTOP_MGMT_COMMAND_ID_MBA_STATUS = 1;
+  DESKTOP_MGMT_COMMAND_ID_MBA_START = 2;
+  DESKTOP_MGMT_COMMAND_ID_MBA_STOP = 3;
+  DESKTOP_MGMT_COMMAND_ID_PACKAGE = 4;
+}
+
+// Query current desktop/UI heap statistics.
+message DesktopStatusRequest {}
+
+// Heap usage counters used by desktop diagnostics.
+message DesktopStatusResponse {
+  // Currently free heap bytes.
+  uint32 free_bytes = 1;
+
+  // Currently allocated heap bytes.
+  uint32 allocated_bytes = 2;
+
+  // Allocation high-water mark observed since boot.
+  uint32 max_allocated_bytes = 3;
+}
+
+// Lifecycle state of the most recent managed foreground MBA Session.
+enum DesktopMbaState {
+  DESKTOP_MBA_STATE_IDLE = 0;
+  DESKTOP_MBA_STATE_ACCEPTED = 1;
+  DESKTOP_MBA_STATE_STARTING = 2;
+  DESKTOP_MBA_STATE_RUNNING = 3;
+  DESKTOP_MBA_STATE_STOPPING = 4;
+  DESKTOP_MBA_STATE_ENDED = 5;
+  DESKTOP_MBA_STATE_FAILED = 6;
+}
+message DesktopMbaStatusRequest {
+  // Zero queries the latest Session; a nonzero stale ID is rejected.
+  uint64 session_id = 1;
+}
+message DesktopMbaStartRequest {
+  string app_id = 1;
+  string path = 2;
+}
+message DesktopMbaStopRequest {
+  uint64 session_id = 1;
+  // Bounded cooperative stop deadline, 1 through 30000 milliseconds.
+  uint32 timeout_ms = 2;
+}
+message DesktopMbaResponse {
+  uint32 protocol_version = 1;
+  uint64 session_id = 2;
+  string app_id = 3;
+  string path = 4;
+  DesktopMbaState state = 5;
+  int32 detail = 6;
+  // True only after the thread, loader and owned resources were reclaimed.
+  bool resources_reclaimed = 7;
+}
+
+// Package control uses the existing MCUmgr FS data plane for bounded files.
+enum DesktopPackageAction {
+  DESKTOP_PACKAGE_ACTION_STATUS = 0;
+  DESKTOP_PACKAGE_ACTION_PREPARE = 1;
+  DESKTOP_PACKAGE_ACTION_COMMIT = 2;
+  DESKTOP_PACKAGE_ACTION_ABORT = 3;
+  DESKTOP_PACKAGE_ACTION_UNINSTALL = 4;
+  DESKTOP_PACKAGE_ACTION_ROLLBACK = 5;
+}
+message DesktopPackageRequest {
+  DesktopPackageAction action = 1;
+  string app_id = 2;
+  string manifest_path = 3;
+  bool replace = 4;
+  bool remove_saves = 5;
+  // Desired rollback identity makes retries idempotent.
+  string bundle = 6;
+}
+message DesktopPackageResponse {
+  uint32 protocol_version = 1;
+  string app_id = 2;
+  string state = 3;
+  string current_bundle = 4;
+  string pending_bundle = 5;
+  string previous_bundle = 6;
+  string mba_path = 7;
+  uint64 free_bytes = 8;
+  uint64 required_bytes = 9;
+  // Negative errno; nonzero never authorizes a subsequent mutation.
+  int32 detail = 10;
+}

@@ -1,0 +1,338 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "GnssProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for GNSS configuration and fix-status inspection.
+//
+// `GnssConfigSetRequest` replaces the full GNSS configuration. Status responses
+// expose the most recent cached fix and satellite snapshot; nested message
+// fields may be absent when no valid fix/time is available yet.
+enum GnssState {
+  // Receiver is asleep/inactive.
+  GNSS_STATE_SLEEP = 0;
+
+  // Receiver is acquiring satellites / searching for a fix.
+  GNSS_STATE_ACQUIRING = 1;
+
+  // Receiver is tracking and producing fixes.
+  GNSS_STATE_TRACK = 2;
+}
+
+// High-level GNSS fix status.
+enum GnssFixStatus {
+  GNSS_FIX_STATUS_NO_FIX = 0;
+  GNSS_FIX_STATUS_GNSS_FIX = 1;
+  GNSS_FIX_STATUS_DGNSS_FIX = 2;
+  GNSS_FIX_STATUS_ESTIMATED_FIX = 3;
+}
+
+// GNSS fix quality reported by the underlying driver.
+enum GnssFixQuality {
+  GNSS_FIX_QUALITY_INVALID = 0;
+  GNSS_FIX_QUALITY_GNSS_SPS = 1;
+  GNSS_FIX_QUALITY_DGNSS = 2;
+  GNSS_FIX_QUALITY_GNSS_PPS = 3;
+  GNSS_FIX_QUALITY_RTK = 4;
+  GNSS_FIX_QUALITY_FLOAT_RTK = 5;
+  GNSS_FIX_QUALITY_ESTIMATED = 6;
+}
+
+// GNSS constellation identifier.
+//
+// Note that the numeric values are bit flags so the same enum can also be used
+// inside masks such as `GnssConfig.system_mask`. In `GnssSatellite.system`,
+// exactly one value should be used per entry.
+enum GnssSystem {
+  GNSS_SYSTEM_UNKNOWN = 0;
+  GNSS_SYSTEM_GPS = 1;
+  GNSS_SYSTEM_GLONASS = 2;
+  GNSS_SYSTEM_GALILEO = 4;
+  GNSS_SYSTEM_BEIDOU = 8;
+  GNSS_SYSTEM_QZSS = 16;
+  GNSS_SYSTEM_IRNSS = 32;
+  GNSS_SYSTEM_SBAS = 64;
+  GNSS_SYSTEM_IMES = 128;
+  GNSS_SYSTEM_GPS_L5 = 256;
+  GNSS_SYSTEM_GALILEO_L5 = 512;
+  GNSS_SYSTEM_QZSS_L5 = 1024;
+  GNSS_SYSTEM_BEIDOU_B1C = 2048;
+  GNSS_SYSTEM_BEIDOU_B2A = 4096;
+  GNSS_SYSTEM_QZSS_L1S = 8192;
+}
+
+// MCUmgr group ID for the Meshbus GNSS service.
+enum GnssMgmtGroupId {
+  GNSS_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  GNSS_MGMT_GROUP_ID_MESHBUS_GNSS = 67;
+}
+
+// Command IDs handled by the Meshbus GNSS management group.
+enum GnssMgmtCommandId {
+  GNSS_MGMT_COMMAND_ID_CONFIG = 0;
+  GNSS_MGMT_COMMAND_ID_STATUS = 1;
+  GNSS_MGMT_COMMAND_ID_CONFIG_RESET = 2;
+  GNSS_MGMT_COMMAND_ID_ENABLE = 3;
+  GNSS_MGMT_COMMAND_ID_SATELLITES_CLEAR = 4;
+  GNSS_MGMT_COMMAND_ID_UPDATE = 5;
+}
+
+// Persistent GNSS configuration.
+message GnssConfig {
+  // Receiver dynamics profile / navigation model.
+  enum GnssNavMode {
+    // Stationary or near-stationary use.
+    ZERO_DYNAMICS = 0;
+
+    // Low-dynamics motion, such as walking.
+    LOW_DYNAMICS = 1;
+
+    // Balanced dynamics, typically suitable for automotive use.
+    BALANCED_DYNAMICS = 2;
+
+    // High-dynamics motion, such as aerial platforms.
+    HIGH_DYNAMICS = 3;
+  }
+
+  // Enables the GNSS service.
+  bool enabled = 1;
+
+  // Receiver dynamics profile.
+  GnssNavMode nav_mode = 2;
+
+  // GNSS fix rate in Hz while the receiver is active.
+  // The current implementation accepts 1, 2, 4, 5, or 10 Hz.
+  uint32 fix_rate = 3;
+
+  // Enabled GNSS constellations as a bit mask.
+  // Bits 0..7 correspond to GPS, GLONASS, Galileo, BeiDou, QZSS, IRNSS,
+  // SBAS, and IMES respectively.
+  uint32 system_mask = 4;
+
+  // Sampling/update interval in milliseconds.
+  // This controls how often the service starts an acquisition cycle.
+  uint32 update_interval = 5;
+
+  // Minimum active time in milliseconds for each acquisition cycle.
+  // The runtime clamps this to `update_interval` when necessary.
+  uint32 min_active_time = 6;
+
+  // When true, GNSS UTC may be used to discipline the system real-time clock.
+  bool time_sync = 7;
+
+  // Prefer the DTS-selected electronic Compass for the Compass widget.
+  // When no electronic Compass is configured this field is ignored and the
+  // widget uses GNSS course over ground. Absence means the firmware default,
+  // which is enabled.
+  optional bool electronic_compass = 8;
+}
+
+// Effective heading source used by the Compass widget.
+enum GnssHeadingSource {
+  GNSS_HEADING_SOURCE_UNSPECIFIED = 0;
+  GNSS_HEADING_SOURCE_ELECTRONIC = 1;
+  GNSS_HEADING_SOURCE_COURSE = 2;
+}
+
+// Page-scoped heading runtime state.
+enum GnssHeadingState {
+  GNSS_HEADING_STATE_UNAVAILABLE = 0;
+  GNSS_HEADING_STATE_IDLE = 1;
+  GNSS_HEADING_STATE_STARTING = 2;
+  GNSS_HEADING_STATE_READY = 3;
+  GNSS_HEADING_STATE_WAITING_FOR_FIX = 4;
+  GNSS_HEADING_STATE_WAITING_FOR_MOTION = 5;
+  GNSS_HEADING_STATE_STALE = 6;
+  GNSS_HEADING_STATE_SOURCE_DISABLED = 7;
+  GNSS_HEADING_STATE_ERROR = 8;
+}
+
+// Source-specific heading quality.
+enum GnssHeadingAccuracy {
+  GNSS_HEADING_ACCURACY_UNRELIABLE = 0;
+  GNSS_HEADING_ACCURACY_LOW = 1;
+  GNSS_HEADING_ACCURACY_MEDIUM = 2;
+  GNSS_HEADING_ACCURACY_HIGH = 3;
+}
+
+// Optional electronic Compass calibration guidance.
+enum GnssHeadingCalibrationHint {
+  GNSS_HEADING_CALIBRATION_HINT_NONE = 0;
+  GNSS_HEADING_CALIBRATION_HINT_FIGURE_EIGHT = 1;
+  GNSS_HEADING_CALIBRATION_HINT_KEEP_LEVEL = 2;
+}
+
+// Read-only Compass-widget heading snapshot and lifecycle status.
+message GnssHeadingStatus {
+  uint32 sequence = 1;
+  uint32 source_timestamp_ms = 2;
+  sint32 heading_milli_deg = 3;
+  sint32 last_error = 4;
+  GnssHeadingSource source = 5;
+  GnssHeadingState state = 6;
+  GnssHeadingAccuracy accuracy = 7;
+  GnssHeadingCalibrationHint calibration_hint = 8;
+  bool electronic_available = 9;
+  bool active = 10;
+  bool valid = 11;
+}
+
+// Latest cached navigation solution.
+message GnssNavData {
+  // Latitude in signed nanodegrees.
+  sint64 latitude = 1;
+
+  // Longitude in signed nanodegrees.
+  sint64 longitude = 2;
+
+  // Altitude above mean sea level in millimeters.
+  sint32 altitude_mm = 3;
+
+  // Ground speed in millimeters per second.
+  uint32 speed_mm_per_s = 4;
+
+  // Course over ground in milli-degrees.
+  uint32 bearing_milli_deg = 5;
+}
+
+// UTC timestamp associated with the latest cached fix.
+message GnssUtcTime {
+  // Year within the current century, 0..99 (e.g. 26 for 2026).
+  uint32 century_year = 1;
+
+  // Month number, 1..12.
+  uint32 month = 2;
+
+  // Day of month, 1..31.
+  uint32 month_day = 3;
+
+  // Hour, 0..23.
+  uint32 hour = 4;
+
+  // Minute, 0..59.
+  uint32 minute = 5;
+
+  // Millisecond component within the current minute.
+  uint32 millisecond = 6;
+}
+
+// One satellite entry in the cached constellation snapshot.
+message GnssSatellite {
+  // PRN / satellite identifier within the constellation.
+  uint32 prn = 1;
+
+  // Constellation for this satellite entry.
+  GnssSystem system = 2;
+
+  // Reported signal-to-noise ratio in dB.
+  uint32 snr_db = 3;
+
+  // Elevation angle in degrees.
+  uint32 elevation_deg = 4;
+
+  // Azimuth angle in degrees.
+  uint32 azimuth_deg = 5;
+
+  // True when the receiver is actively tracking this satellite.
+  bool is_tracked = 6;
+
+  // True when correction data (for example DGNSS/RTK assistance) is in use.
+  bool is_corrected = 7;
+}
+
+// Query current GNSS status and latest cached fix.
+message GnssStatusRequest {}
+
+// Snapshot of GNSS runtime state plus the latest cached fix/satellites.
+message GnssStatusResponse {
+  // Effective GNSS configuration in use.
+  GnssConfig config = 1;
+
+  // Current receiver state.
+  GnssState state = 2;
+
+  // High-level fix status.
+  GnssFixStatus fix_status = 3;
+
+  // Driver-reported fix quality.
+  GnssFixQuality fix_quality = 4;
+
+  // Number of satellites in the cached snapshot.
+  uint32 tracked_satellites_count = 5;
+
+  // Horizontal dilution of precision in milli-units.
+  uint32 hdop_milli = 6;
+
+  // Geoid separation in millimeters.
+  sint32 geoid_separation_mm = 7;
+
+  // Latest cached navigation solution, when available.
+  GnssNavData nav = 8;
+
+  // Latest cached UTC time, when available.
+  GnssUtcTime utc = 9;
+
+  // Cached satellite snapshot.
+  repeated GnssSatellite satellites = 10;
+
+  // Compass-widget heading source and page-scoped runtime status.
+  GnssHeadingStatus heading = 11;
+}
+
+// Fetch the current GNSS configuration.
+message GnssConfigGetRequest {}
+
+// Current effective GNSS configuration.
+message GnssConfigGetResponse {
+  GnssConfig config = 1;
+}
+
+// Replace the full GNSS configuration.
+message GnssConfigSetRequest {
+  GnssConfig config = 1;
+}
+
+// Effective GNSS configuration after validation/application.
+message GnssConfigSetResponse {
+  GnssConfig config = 1;
+}
+
+// Restore GNSS configuration defaults.
+message GnssConfigResetRequest {}
+
+// Effective GNSS configuration after reset.
+message GnssConfigResetResponse {
+  GnssConfig config = 1;
+}
+
+// Toggle GNSS enable state without replacing the rest of the config.
+message GnssEnableRequest {
+  bool enabled = 1;
+}
+
+// Effective GNSS configuration after applying the enable toggle.
+message GnssEnableResponse {
+  GnssConfig config = 1;
+}
+
+// Trigger an immediate acquisition cycle.
+message GnssUpdateRequest {}
+
+// Result of an immediate acquisition trigger request.
+message GnssUpdateResponse {
+  bool triggered = 1;
+}
+
+// Clear the cached per-satellite snapshot.
+message GnssSatellitesClearRequest {}
+
+message GnssSatellitesClearResponse {
+  bool cleared = 1;
+}

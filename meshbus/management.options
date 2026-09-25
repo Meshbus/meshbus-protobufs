@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*ManagementGroupId int_size:8
+*ManagementCommandId int_size:8
+*ManagementSmpExchangeRequest.contact_prefix max_size:5
+*ManagementSmpExchangeRequest.payload max_size:504
+*ManagementSmpExchangeRequest.secret max_size:16
+*ManagementSmpResultResponse.response max_size:448
+*ManagementSecretSetRequest.secret max_size:16
+*ManagementConfig.secret max_size:16

@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*FsMgmtGroupId int_size:8
+*FsMgmtCommandId int_size:8
+*FsEntryType int_size:8
+*FsVolumeStatus.id max_size:16
+*FsVolumeStatus.mount_point max_size:192
+*FsEntry.path max_size:192
+*FsEntry.name max_size:64
+*FsStatusRequest.volume_id max_size:16
+*FsListRequest.path max_size:192
+*FsListRequest.offset int_size:16
+*FsListRequest.limit int_size:8
+*FsListResponse.path max_size:192
+*FsListResponse.total_count int_size:16
+*FsListResponse.next_offset int_size:16
+*FsListResponse.entries max_count:8
+*FsMkdirRequest.path max_size:192
+*FsStatRequest.path max_size:192
+*FsDeleteRequest.path max_size:192
+*FsFormatRequest.volume_id max_size:16
+*FsFormatRequest.confirm max_size:17

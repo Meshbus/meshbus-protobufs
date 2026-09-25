@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*LlextMgmtGroupId int_size:8
+*LlextMgmtCommandId int_size:8
+*LlextHostInfoResponse.device_id max_size:32
+*LlextHostInfoResponse.target max_length:95
+*LlextHostInfoResponse.build_revision max_length:63
+*LlextHostInfoResponse.image_sha256 max_size:32

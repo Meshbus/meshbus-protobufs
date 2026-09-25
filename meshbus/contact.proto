@@ -1,0 +1,292 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "ContactProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// Protocol-neutral role classification stored by Contact. Protocol modules
+// convert their native role/type values to this Contact-owned schema at the
+// adapter boundary.
+enum ContactRole {
+  // Unspecified / disabled role.
+  CONTACT_ROLE_NONE     = 0;
+
+  // Interactive user/chat contact.
+  CONTACT_ROLE_CHAT     = 1;
+
+  // Relay-oriented contact that primarily forwards traffic.
+  CONTACT_ROLE_REPEATER = 2;
+
+  // Fixed room/base contact.
+  CONTACT_ROLE_ROOM     = 3;
+
+  // Sensor-only / telemetry-oriented contact.
+  CONTACT_ROLE_SENSOR   = 4;
+}
+
+// MCUmgr schema for persisted remote contacts and contact-directed requests.
+enum ContactMgmtGroupId {
+  CONTACT_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  CONTACT_MGMT_GROUP_ID_MESHBUS_CONTACT = 79;
+}
+
+// Command IDs handled by the Meshbus contact management group.
+enum ContactMgmtCommandId {
+  CONTACT_MGMT_COMMAND_ID_GET = 0;
+  CONTACT_MGMT_COMMAND_ID_FIND_BY_PREFIX = 1;
+  CONTACT_MGMT_COMMAND_ID_FIND_BY_KEY = 2;
+  CONTACT_MGMT_COMMAND_ID_STORE_COUNT = 3;
+  CONTACT_MGMT_COMMAND_ID_STORE_SIZE = 4;
+  CONTACT_MGMT_COMMAND_ID_SET = 5;
+  CONTACT_MGMT_COMMAND_ID_RESET = 6;
+  CONTACT_MGMT_COMMAND_ID_SHARE = 7;
+  CONTACT_MGMT_COMMAND_ID_DISCOVER_PATH = 8;
+  CONTACT_MGMT_COMMAND_ID_TRACE_PATH = 9;
+  CONTACT_MGMT_COMMAND_ID_TELEMETRY = 10;
+  CONTACT_MGMT_COMMAND_ID_ADD = 11;
+  CONTACT_MGMT_COMMAND_ID_NEXT_BY_HASH = 12;
+  CONTACT_MGMT_COMMAND_ID_BINARY = 13;
+}
+
+// Persistent contact-table entry stored by the device.
+message Contact {
+  // Contact public key (32 bytes when fully populated).
+  bytes public_key = 1;
+
+  // Last known remote node name.
+  string name = 2;
+
+  // Last known remote contact role.
+  ContactRole role = 3;
+
+  // Encoded outbound repeater chain from the local node to this contact.
+  // This contains intermediate repeaters only: it does not include the local
+  // source node or the destination contact. For a contact reached through one
+  // repeater, `out_path` contains that repeater's path hash information only.
+  // Empty can mean either "direct neighbor" (when `is_neighbor` is true) or
+  // "path not known yet".
+  bytes out_path = 4;
+
+  // True when the most recent discovered path had zero intermediate hops.
+  bool is_neighbor = 5;
+
+  // First time this contact was seen, in local device clock seconds.
+  uint32 first_seen_timestamp = 6;
+
+  // Contact flags used by local policy and UI.
+  // bit 0: favourite
+  // bit 1: base telemetry permission
+  // bit 2: location telemetry permission
+  // bit 3: environment telemetry permission
+  uint32 flags = 7;
+
+  // Last latitude learned from advert/telemetry, in signed microdegrees.
+  sint32 latitude = 8;
+
+  // Last longitude learned from advert/telemetry, in signed microdegrees.
+  sint32 longitude = 9;
+
+  // Most recent time this contact was seen, in local device clock seconds.
+  uint32 last_seen_timestamp = 10;
+
+  // Most recent SNR observed for this contact, in Q4 format (divide by 4 for dB).
+  sint32 last_seen_snr = 11;
+
+  // Path hash size used when decoding/encoding `out_path`.
+  // 0 means unknown or legacy data.
+  uint32 path_hash_size = 12;
+
+  // Local alias/override name for UI display.
+  string alias = 13;
+
+  // Per-contact credential used by clients that manage this node over
+  // authenticated management bearers. Product-facing clients present it as an
+  // 8-to-16-character management password. Empty means no credential is stored
+  // for this contact. The Nanopb payload capacity is 64 bytes; that storage
+  // capacity does not define the accepted management password length.
+  bytes management_secret = 14;
+}
+
+// Lookup one contact by configured public-key prefix.
+message ContactFindByPrefixRequest {
+  // Fixed-width public-key prefix
+  // (`CONFIG_MBS_CONTACT_PREFIX_BYTES` on the device).
+  bytes public_key_prefix = 1;
+}
+
+// Matching contact record.
+message ContactFindByPrefixResponse {
+  uint32 index = 1;
+  Contact contact = 2;
+}
+
+// Lookup one contact by full public key.
+message ContactFindByKeyRequest {
+  bytes public_key = 1;
+}
+
+// Matching contact record found by full public key.
+message ContactFindByKeyResponse {
+  uint32 index = 1;
+  Contact contact = 2;
+}
+
+// Look up the contact stored at a zero-based local slot index.
+message ContactGetRequest {
+  uint32 index = 1;
+}
+
+// Contact record stored at the requested slot index.
+message ContactGetResponse {
+  Contact contact = 1;
+}
+
+// Query the current contact-store usage count only.
+message ContactStoreCountRequest {}
+
+// Current number of stored contact records.
+message ContactStoreCountResponse {
+  uint32 count = 1;
+}
+
+// Query the configured contact-store capacity only.
+message ContactStoreSizeRequest {}
+
+// Maximum number of contact records supported by the device.
+message ContactStoreSizeResponse {
+  uint32 size = 1;
+}
+
+// Find the next stable contact slot matching a one-byte mesh hash.
+message ContactNextByHashRequest {
+  bytes hash = 1;
+  uint32 start_slot = 2;
+}
+
+message ContactNextByHashResponse {
+  uint32 index = 1;
+  Contact contact = 2;
+}
+
+// Insert a new contact identity.
+message ContactAddRequest {
+  bytes public_key = 1;
+  string name = 2;
+  ContactRole role = 3;
+}
+
+// Contact record after insertion.
+message ContactAddResponse {
+  Contact contact = 1;
+}
+
+// Set or upsert a contact slot by public-key prefix.
+//
+// If the prefix is already present, the existing slot is updated in place. If
+// it is new, the device chooses a slot using the current eviction policy.
+message ContactSetRequest {
+  bytes public_key_prefix = 1;
+  Contact contact = 2;
+
+  // Explicitly clear the persisted management credential. An empty credential
+  // without this flag preserves the existing value so unrelated updates remain
+  // safe when Contact read responses redact credential bytes.
+  bool clear_management_secret = 3;
+}
+
+// Contact slot after set/upsert.
+message ContactSetResponse {
+  Contact contact = 1;
+}
+
+// Reset one contact slot by public-key prefix. Missing contacts are treated as
+// already reset.
+message ContactResetRequest {
+  bytes public_key_prefix = 1;
+}
+
+// Result of a contact-slot reset.
+message ContactResetResponse {
+  bool reset = 1;
+}
+
+// Request path discovery to a contact.
+//
+// This is asynchronous: `accepted` only means the request was queued locally.
+// Final path details arrive through the notify channel.
+message ContactDiscoverPathRequest {
+  bytes public_key_prefix = 1;
+}
+
+// Local acceptance of a discover-path request.
+message ContactDiscoverPathResponse {
+  bool accepted = 1;
+
+  // Generated request correlation tag.
+  uint32 tag = 2;
+}
+
+// Request path tracing to a contact.
+//
+// This is asynchronous: `accepted` only means the request was queued locally.
+// Final trace details arrive through the notify channel.
+message ContactTracePathRequest {
+  bytes public_key_prefix = 1;
+}
+
+// Local acceptance of a trace-path request.
+message ContactTracePathResponse {
+  bool accepted = 1;
+
+  // Generated request correlation tag.
+  uint32 tag = 2;
+}
+
+// Request a telemetry report from a contact.
+//
+// This is asynchronous: `accepted` only means the request was queued locally.
+// Final telemetry updates arrive through the notify channel carrying the raw
+// telemetry payload.
+message ContactTelemetryRequest {
+  bytes public_key_prefix = 1;
+}
+
+// Local acceptance of a telemetry request.
+message ContactTelemetryResponse {
+  bool accepted = 1;
+
+  // Generated request correlation tag.
+  uint32 tag = 2;
+}
+
+// Re-share the cached advert for a known contact.
+//
+// This is asynchronous and only confirms local acceptance.
+message ContactShareRequest {
+  bytes public_key_prefix = 1;
+}
+
+// Local acceptance of a contact-share request.
+message ContactShareResponse {
+  bool accepted = 1;
+}
+
+// Submit a contact-directed binary request.
+//
+// This is asynchronous: `accepted` only means the request entered the local
+// runtime queue. The binary response is delivered to subscribed clients.
+message ContactBinaryRequest {
+  bytes public_key_prefix = 1;
+  bytes payload = 2;
+}
+
+message ContactBinaryResponse {
+  bool accepted = 1;
+  uint32 tag = 2;
+}

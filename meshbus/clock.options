@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*ClockMgmtGroupId int_size:8
+*ClockMgmtCommandId int_size:8

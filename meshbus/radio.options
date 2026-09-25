@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*RadioState int_size:8
+*RadioMgmtGroupId int_size:8
+*RadioMgmtCommandId int_size:8
+*RadioConfig.tx_power int_size:8
+*RadioConfig.spread_factor int_size:8
+*RadioConfig.coding_rate int_size:8
+*RadioStatusResponse.state int_size:8
+*RadioStatusResponse.last_rssi_dbm int_size:16
+*RadioStatusResponse.last_snr_q4 int_size:8
+*RadioStatusResponse.noise_floor_dbm int_size:16
+*RadioStatusResponse.rssi_inst_dbm int_size:16
+*RadioCalibrateRequest.threshold_db int_size:16
+*RadioCalibrateResponse.threshold_db int_size:16
+*RadioAirtimeRequest.payload_len int_size:16
+*RadioScoreRequest.payload_len int_size:16
+*RadioSendRequest.payload max_size:255
+*RadioSendResponse.accepted_len int_size:16
+*RadioContinuousWaveRequest.tx_power_dbm int_size:8
+*RadioContinuousWaveRequest.duration_s int_size:16

@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "MessagesProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for the Meshbus message receive queue and send APIs.
+//
+// The message service exposes a local FIFO queue of inbound messages and async
+// send requests. Message targets are stored as a fixed 4-byte prefix so the
+// same record shape can represent either a contact public-key prefix or a
+// channel secret prefix.
+enum MessageMgmtGroupId {
+  MESSAGE_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  MESSAGE_MGMT_GROUP_ID_MESHBUS_MESSAGE = 69;
+}
+
+// Command IDs handled by the Meshbus message management group.
+enum MessageMgmtCommandId {
+  MESSAGE_MGMT_COMMAND_ID_SEND_NODE = 0;
+  MESSAGE_MGMT_COMMAND_ID_SEND_CHANNEL = 1;
+  MESSAGE_MGMT_COMMAND_ID_NEXT = 2;
+}
+
+// Message record stored in the local inbound queue.
+message MessageContent {
+  // Direction and destination kind for the message.
+  enum MessageType {
+    // Local device sent a direct message to a contact public key.
+    SEND_NODE = 0;
+
+    // Local device received a direct message from a contact public key.
+    RECEIVE_NODE = 1;
+
+    // Local device sent a channel/broadcast message.
+    SEND_CHANNEL = 2;
+
+    // Local device received a channel/broadcast message.
+    RECEIVE_CHANNEL = 3;
+  }
+
+  // Packet route used by the received message.
+  // Transport route variants are normalized to FLOOD or DIRECT.
+  enum MessageRoute {
+    // Route was not supplied by older producers or local test events.
+    ROUTE_UNSPECIFIED = 0;
+
+    // Message was received from a flood-routed packet.
+    ROUTE_FLOOD = 1;
+
+    // Message was received from a direct-routed packet.
+    ROUTE_DIRECT = 2;
+  }
+
+  // Fixed-width target prefix used by the local message store.
+  // Node messages use the contact public-key prefix; channel messages use the
+  // channel secret prefix. The local implementation always stores 4 bytes.
+  bytes target = 1;
+
+  // Message direction and addressing type.
+  MessageType type = 2;
+
+  // Sender display name captured when the message entered the cache.
+  string sender_name = 3;
+
+  // Raw UTF-8 message payload bytes.
+  // The current implementation rejects NUL bytes and caps the payload at the
+  // local message TX limit.
+  bytes payload = 4;
+
+  // Timestamp in monotonic milliseconds on the local device clock.
+  fixed64 timestamp = 5;
+
+  // Optional receive SNR in dB.
+  // Present only for RX messages where radio metadata was available.
+  optional float rx_snr = 6;
+
+  // Sender-provided timestamp carried by the remote packet.
+  // This value is descriptive only and is not guaranteed to be synchronized
+  // with the local device clock.
+  fixed64 sender_timestamp = 7;
+
+  // Received packet route metadata.
+  // This is independent from `type`: node/channel describes the address kind,
+  // route describes whether the packet route bit was flood or direct.
+  MessageRoute route = 8;
+}
+
+// Read and consume the next queued message.
+message MessageNextRequest {}
+
+// Result of reading one queued inbound message.
+message MessageNextResponse {
+  MessageContent message = 1;
+}
+
+// Send a direct text message to a node/contact public key.
+message MessageSendNodeRequest {
+  // Fixed-width contact public-key prefix
+  // (`CONFIG_MBS_CONTACT_PREFIX_BYTES` on the device).
+  bytes key_prefix = 1;
+
+  // UTF-8 text payload. Empty strings are rejected by the service.
+  string message = 2;
+
+  // Optional route override.
+  // When true, force flood routing instead of the default route selection.
+  optional bool flood = 3;
+
+  // Client-provided global ACK-correlation token.
+  optional uint32 attempt = 4;
+}
+
+// Result of a direct send request.
+message MessageSendNodeResponse {
+  // True once the local service accepted and queued the send request.
+  bool accepted = 1;
+
+  // Stable local ACK token returned by the device for this pending send.
+  fixed64 ack_token = 2;
+}
+
+// Send a text message to a channel by local slot index.
+message MessageSendChannelRequest {
+  // Zero-based local channel slot index.
+  uint32 channel_index = 1;
+
+  // UTF-8 text payload. Empty strings are rejected by the service.
+  string message = 2;
+}
+
+// Result of a channel send request.
+message MessageSendChannelResponse {
+  // True once the local service accepted and queued the send request.
+  bool accepted = 1;
+}

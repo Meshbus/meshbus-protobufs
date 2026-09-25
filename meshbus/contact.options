@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*ContactRole int_size:8
+*ContactMgmtGroupId int_size:8
+*ContactMgmtCommandId int_size:8
+*Contact.public_key max_size:32
+*Contact.name max_size:32
+*Contact.role int_size:8
+*Contact.out_path max_size:64
+*Contact.last_seen_snr int_size:8
+*Contact.alias max_size:32
+*Contact.management_secret max_size:64
+*ContactFindByKeyRequest.public_key max_size:32
+*ContactFindByKeyResponse.index int_size:8
+*ContactFindByPrefixRequest.public_key_prefix max_size:5
+*ContactFindByPrefixResponse.index int_size:8
+*ContactGetRequest.index int_size:8
+*ContactStoreCountResponse.count int_size:8
+*ContactStoreSizeResponse.size int_size:8
+*ContactNextByHashRequest.hash max_size:1
+*ContactNextByHashRequest.start_slot int_size:8
+*ContactNextByHashResponse.index int_size:8
+*ContactAddRequest.public_key max_size:32
+*ContactAddRequest.name max_size:32
+*ContactAddRequest.role int_size:8
+*ContactSetRequest.public_key_prefix max_size:5
+*ContactResetRequest.public_key_prefix max_size:5
+*ContactDiscoverPathRequest.public_key_prefix max_size:5
+*ContactTracePathRequest.public_key_prefix max_size:5
+*ContactTelemetryRequest.public_key_prefix max_size:5
+*ContactShareRequest.public_key_prefix max_size:5
+*ContactBinaryRequest.public_key_prefix max_size:5
+*ContactBinaryRequest.payload max_size:163

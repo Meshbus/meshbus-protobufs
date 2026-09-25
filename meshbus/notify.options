@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*NotifyNodeDiscoverPath.public_key_prefix max_size:5
+*NotifyNodeDiscoverPath.out_path max_size:64
+*NotifyNodeDiscoverPath.out_path_snr max_count:64
+*NotifyNodeDiscoverPath.return_path_snr max_count:64
+*NotifyNodeTracePath.public_key_prefix max_size:5
+*NotifyNodeTracePath.state int_size:8
+*NotifyNodeTracePath.out_path_snr max_count:64
+*NotifyNodeTracePath.return_path_snr max_count:64
+*NotifyNodeChange.public_key_prefix max_size:5
+*NotifyChannelChange.secret_prefix max_size:5
+*NotifyNodeTelemetry.public_key_prefix max_size:5
+*NotifyNodeTelemetry.payload max_size:230
+*NotifyNodeAdvert.public_key max_size:32
+*NotifyNodeAdvert.response_snr int_size:8
+*NotifyNodeAdvert.name max_size:32
+*NotifyNodeAdvert.role int_size:8
+*NotifyNodeAdvert.out_path max_size:64
+*NotifyNodeAdvert.path_hash_size int_size:8
+*NotifyNodeDiscover.public_key max_size:32
+*NotifyNodeDiscover.role int_size:8
+*NotifyNodeDiscover.path max_size:64
+*NotifyNodeDiscover.uplink_snr int_size:8
+*NotifyNodeDiscover.downlink_snr int_size:8
+*NotifyManagementSmp.response max_size:608
+*NotifyMeshcoreTrace.state int_size:8
+*NotifyMeshcoreTrace.out_path_snr max_count:64
+*NotifyMeshcoreTrace.return_path_snr max_count:64

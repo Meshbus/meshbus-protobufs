@@ -1,0 +1,118 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "PowerProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for power-state inspection and shutdown policy control.
+enum PowerMgmtGroupId {
+  POWER_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  POWER_MGMT_GROUP_ID_MESHBUS_POWER = 65;
+}
+
+// Command IDs handled by the Meshbus power management group.
+enum PowerMgmtCommandId {
+  POWER_MGMT_COMMAND_ID_SHUTDOWN = 0;
+  POWER_MGMT_COMMAND_ID_STATUS = 1;
+  POWER_MGMT_COMMAND_ID_CONFIG = 2;
+  POWER_MGMT_COMMAND_ID_CONFIG_RESET = 3;
+  POWER_MGMT_COMMAND_ID_REBOOT = 4;
+  POWER_MGMT_COMMAND_ID_BOOTLOADER = 5;
+}
+
+// Persistent power-management policy.
+message PowerConfig {
+  // Low-voltage shutdown timeout in seconds.
+  // `0` disables the policy; non-zero values arm the shutdown after the
+  // low-voltage condition persists for that duration.
+  uint32 low_voltage_shutdown_timeout = 1;
+
+  // External-power-loss shutdown timeout in seconds.
+  // `0` disables the policy.
+  uint32 losing_power_shutdown_timeout = 2;
+
+  // No-connection shutdown timeout in seconds.
+  // `0` disables the policy. A non-zero value requires a Bluetooth/Wi-Fi
+  // connection to appear before the timeout expires.
+  uint32 no_connection_shutdown_timeout = 3;
+}
+
+// Request an immediate power-off.
+message PowerShutdownRequest {}
+
+// Result of a shutdown request.
+message PowerShutdownResponse {
+  bool triggered = 1;
+}
+
+// Query current power/fuel-gauge status.
+message PowerStatusRequest {}
+
+// Snapshot of power policy plus current battery/charger state.
+message PowerStatusResponse {
+  // Effective power-management policy in use.
+  PowerConfig config = 1;
+
+  // Battery voltage in millivolts, when a fuel gauge is available.
+  optional uint32 voltage_mv = 2;
+
+  // State of charge percentage, when a fuel gauge is available.
+  optional uint32 soc_percent = 3;
+
+  // Battery temperature in deci-kelvin, when a fuel gauge is available.
+  optional uint32 temperature_dk = 4;
+
+  // True when the battery is currently charging.
+  bool charging = 5;
+
+  // True when external power is currently present/online.
+  bool online = 6;
+}
+
+// Fetch the current power-management policy.
+message PowerConfigGetRequest {}
+
+// Current effective power-management policy.
+message PowerConfigGetResponse {
+  PowerConfig config = 1;
+}
+
+// Replace the full power-management policy.
+message PowerConfigSetRequest {
+  PowerConfig config = 1;
+}
+
+// Effective power-management policy after validation/application.
+message PowerConfigSetResponse {
+  PowerConfig config = 1;
+}
+
+// Restore power-management policy defaults.
+message PowerConfigResetRequest {}
+
+// Effective power-management policy after reset.
+message PowerConfigResetResponse {
+  PowerConfig config = 1;
+}
+
+// Request an immediate reboot.
+message PowerRebootRequest {}
+
+// Result of a reboot request.
+message PowerRebootResponse {
+  bool triggered = 1;
+}
+
+// Request an immediate reboot into bootloader recovery mode.
+message PowerBootloaderRequest {}
+
+// Result of a bootloader reboot request.
+message PowerBootloaderResponse {
+  bool triggered = 1;
+}

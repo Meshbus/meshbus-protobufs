@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "FirmwareProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// Meshbus firmware lifecycle and low-bandwidth delta-update MCUmgr contract.
+// Firmware management uses MCUmgr group ID 82.
+enum FirmwareMgmtGroupId {
+  FIRMWARE_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  FIRMWARE_MGMT_GROUP_ID_MESHBUS_FIRMWARE = 82;
+}
+
+enum FirmwareMgmtCommandId {
+  FIRMWARE_MGMT_COMMAND_ID_STATUS = 0;
+  FIRMWARE_MGMT_COMMAND_ID_DELTA_BEGIN = 1;
+  FIRMWARE_MGMT_COMMAND_ID_DELTA_WRITE = 2;
+  FIRMWARE_MGMT_COMMAND_ID_DELTA_FINISH = 3;
+  FIRMWARE_MGMT_COMMAND_ID_DELTA_APPLY = 4;
+  FIRMWARE_MGMT_COMMAND_ID_DELTA_ACTIVATE = 5;
+  FIRMWARE_MGMT_COMMAND_ID_DELTA_ABORT = 6;
+}
+
+enum FirmwareUpdateKind {
+  FIRMWARE_UPDATE_KIND_UNSPECIFIED = 0;
+  FIRMWARE_UPDATE_KIND_DELTA = 1;
+  FIRMWARE_UPDATE_KIND_FULL_IMAGE = 2;
+}
+
+enum FirmwareState {
+  FIRMWARE_STATE_IDLE = 0;
+  FIRMWARE_STATE_RECEIVING = 1;
+  FIRMWARE_STATE_STAGED = 2;
+  FIRMWARE_STATE_VERIFIED = 3;
+  FIRMWARE_STATE_APPLYING = 4;
+  FIRMWARE_STATE_PENDING_REBOOT = 5;
+  FIRMWARE_STATE_TESTING = 6;
+  FIRMWARE_STATE_CONFIRMED = 7;
+  FIRMWARE_STATE_ROLLED_BACK = 8;
+  FIRMWARE_STATE_FAILED = 9;
+  FIRMWARE_STATE_ABORTED = 10;
+}
+
+enum FirmwareResult {
+  FIRMWARE_RESULT_OK = 0;
+  FIRMWARE_RESULT_INVALID = 1;
+  FIRMWARE_RESULT_UNSUPPORTED = 2;
+  FIRMWARE_RESULT_BAD_SIGNATURE = 3;
+  FIRMWARE_RESULT_WRONG_TARGET = 4;
+  FIRMWARE_RESULT_WRONG_SOURCE = 5;
+  FIRMWARE_RESULT_DOWNGRADE = 6;
+  FIRMWARE_RESULT_CONFLICT = 7;
+  FIRMWARE_RESULT_BAD_OFFSET = 8;
+  FIRMWARE_RESULT_BUSY = 9;
+  FIRMWARE_RESULT_UNSAFE_POWER = 10;
+  FIRMWARE_RESULT_SHUTDOWN_PENDING = 11;
+  FIRMWARE_RESULT_FLASH = 12;
+  FIRMWARE_RESULT_VERIFY = 13;
+  FIRMWARE_RESULT_NO_ROUTE = 14;
+  FIRMWARE_RESULT_RATE_LIMITED = 15;
+  FIRMWARE_RESULT_NOT_PROVISIONED = 16;
+  FIRMWARE_RESULT_ROLLBACK = 17;
+  FIRMWARE_RESULT_INTERNAL = 18;
+}
+
+message FirmwareStatusRequest {
+  // Empty queries the active or most recent durable transfer.
+  bytes transfer_id = 1;
+}
+
+message FirmwareDeltaBeginRequest {
+  // Deterministic RFC 8949 canonical CBOR manifest (keys 1 through 20).
+  bytes manifest = 1;
+  // Detached Ed25519 signature over manifest, exactly 64 bytes.
+  bytes signature = 2;
+}
+
+message FirmwareDeltaWriteRequest {
+  bytes transfer_id = 1;
+  uint32 offset = 2;
+  bytes data = 3;
+}
+
+message FirmwareTransferRequest {
+  bytes transfer_id = 1;
+}
+
+message FirmwareResponse {
+  FirmwareResult result = 1;
+  FirmwareState state = 2;
+  bytes transfer_id = 3;
+  uint32 durable_received = 4;
+  uint32 next_offset = 5;
+  uint32 patch_size = 6;
+  uint32 chunk_size = 7;
+  bool retryable = 8;
+  bool safe_to_receive = 9;
+  bool safe_to_apply = 10;
+  bool shutdown_pending = 11;
+  sint32 detail = 12;
+  FirmwareUpdateKind update_kind = 13;
+}

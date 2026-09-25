@@ -1,0 +1,160 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "ManagementProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for authenticated remote SMP-over-LoRa operations.
+enum ManagementGroupId {
+  MANAGEMENT_GROUP_ID_UNSPECIFIED = 0;
+  MANAGEMENT_GROUP_ID_MESHBUS_MANAGEMENT = 80;
+}
+
+// Command IDs handled by the Meshbus management group.
+enum ManagementCommandId {
+  // Start an authenticated remote SMP exchange for a stored Contact.
+  // The remote SMP response is reported asynchronously through notify.
+  MANAGEMENT_COMMAND_ID_SMP_EXCHANGE = 0;
+
+  // Get management-password status or replace the local credential.
+  //
+  // Remote management must not allow read access to this command. Remote write
+  // is allowed so an authenticated manager can rotate the target secret.
+  MANAGEMENT_COMMAND_ID_SECRET = 1;
+
+  // Poll the result of an asynchronous remote SMP exchange.
+  MANAGEMENT_COMMAND_ID_SMP_RESULT = 2;
+
+  // Reset the local management configuration to the unprovisioned state.
+  MANAGEMENT_COMMAND_ID_CONFIG_RESET = 3;
+}
+
+// Persistent local management configuration. Product-facing clients present
+// this credential as an 8-to-16-character management password; `secret`
+// remains the protocol-internal field name.
+message ManagementConfig {
+  // Local credential used when this device answers authenticated management
+  // sessions. Empty means the endpoint is unprovisioned.
+  bytes secret = 1;
+}
+
+// Remote SMP request. The local firmware resolves the target, secret, and route
+// metadata from the Contact record selected by `contact_prefix`, establishes an
+// authenticated session, builds the SMP packet, and forwards it to the remote
+// endpoint.
+message ManagementSmpExchangeRequest {
+  bytes contact_prefix = 1;
+
+  // Remote MCUmgr group id.
+  uint32 group = 2;
+
+  // Remote command id within `group`.
+  uint32 command = 3;
+
+  // Request operation: 0 = read, 1 = write. Firmware also accepts raw SMP
+  // write op 2 for compatibility with lower-level clients.
+  uint32 op = 4;
+
+  // Contiguous chunk of the raw SMP CBOR payload, excluding the 8-byte SMP
+  // header. Empty is valid for read or no-argument write requests.
+  bytes payload = 5;
+
+  // Optional transient credential for this exchange. Empty selects the
+  // Contact's persisted management credential. A non-empty value is never
+  // persisted.
+  bytes secret = 6;
+
+  // Total raw SMP CBOR payload length. Zero preserves the one-request form and
+  // treats `payload` as complete. A larger value starts or continues a
+  // RAM-only upload so an inner 608-byte SMP packet can pass through a
+  // 608-byte outer UART SMP transport.
+  uint32 total_length = 7;
+
+  // Byte offset of `payload` within the complete raw SMP CBOR payload.
+  uint32 offset = 8;
+
+  // Transfer identifier returned by the first partial response. Zero starts a
+  // new transfer; continuation chunks echo the returned non-zero value.
+  uint32 transfer_id = 9;
+}
+
+// Local-node SMP exchange response. `accepted` only means the first remote
+// management frame was queued locally; the remote SMP response arrives through
+// notify with `tag`.
+message ManagementSmpExchangeResponse {
+  bool accepted = 1;
+  uint32 tag = 2;
+
+  // Non-zero while a chunked local upload is in progress.
+  uint32 transfer_id = 3;
+
+  // Required offset for the next contiguous request chunk.
+  uint32 next_offset = 4;
+}
+
+// Poll one remote exchange by correlation tag.
+message ManagementSmpResultRequest {
+  uint32 tag = 1;
+
+  // Remove the cached result after returning its final chunk.
+  bool consume = 2;
+
+  // Byte offset of the requested response chunk.
+  uint32 offset = 3;
+}
+
+// Cached remote SMP result.
+message ManagementSmpResultResponse {
+  // False while no completion event has arrived for this tag.
+  bool ready = 1;
+
+  // Final exchange status. 0 means response contains a complete remote SMP
+  // packet; a negative errno identifies timeout, authentication, transport, or
+  // protocol failure.
+  sint32 status = 2;
+
+  // Total byte length of the complete remote SMP response packet.
+  uint32 total_length = 3;
+
+  // Response packet bytes beginning at the requested offset. Large responses
+  // are returned in multiple chunks so the outer MCUmgr packet stays within
+  // the UART transport MTU.
+  bytes response = 4;
+}
+
+// Fetch local management-password status without returning credential bytes.
+message ManagementSecretGetRequest {}
+
+// Local management-password status.
+message ManagementSecretGetResponse {
+  // Effective SMP request/response capacity after bearer constraints.
+  uint32 effective_max_len = 1;
+
+  // True when a local management password is provisioned.
+  bool configured = 2;
+}
+
+// Replace the local management credential. Product-facing clients accept this
+// as an 8-to-16-character management password.
+message ManagementSecretSetRequest {
+  bytes secret = 1;
+}
+
+// Local management secret update result.
+message ManagementSecretSetResponse {
+  bool accepted = 1;
+}
+
+// Reset the local management configuration.
+message ManagementConfigResetRequest {}
+
+// Local management configuration reset result.
+message ManagementConfigResetResponse {
+  bool accepted = 1;
+}

@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package meshbus;
+
+option csharp_namespace = "Meshbus.Protobufs";
+option go_package = "github.com/meshbus/go/generated";
+option java_outer_classname = "ClockProtos";
+option java_package = "org.meshbus.proto";
+option swift_prefix = "";
+
+// MCUmgr schema for user-facing clock/display-time preferences.
+enum ClockMgmtGroupId {
+  CLOCK_MGMT_GROUP_ID_UNSPECIFIED = 0;
+  CLOCK_MGMT_GROUP_ID_MESHBUS_CLOCK = 75;
+}
+
+// Command IDs handled by the Meshbus clock management group.
+enum ClockMgmtCommandId {
+  CLOCK_MGMT_COMMAND_ID_CONFIG = 0;
+  CLOCK_MGMT_COMMAND_ID_STATUS = 1;
+  CLOCK_MGMT_COMMAND_ID_CONFIG_RESET = 2;
+  CLOCK_MGMT_COMMAND_ID_TIME_SET = 3;
+}
+
+// Persistent clock formatting configuration.
+message ClockConfig {
+  // User-facing hour-format preference.
+  enum ClockTimeFormat {
+    TIME_FORMAT_12H = 0;
+    TIME_FORMAT_24H = 1;
+  }
+
+  // 12-hour or 24-hour display mode.
+  ClockTimeFormat time_format = 1;
+
+  // UTC offset in minutes.
+  // The service expects multiples of 15 minutes in the range UTC-12:00 .. UTC+14:00.
+  sint32 utc_offset_minutes = 2;
+}
+
+// Query current clock configuration.
+message ClockStatusRequest {}
+
+// Snapshot of the current clock configuration.
+message ClockStatusResponse {
+  ClockConfig config = 1;
+
+  // UTC Unix epoch time in milliseconds, when the realtime clock is readable.
+  optional fixed64 unix_time_ms = 2;
+
+  // UTC Unix epoch time in whole seconds.
+  optional fixed64 unix_time_s = 3;
+
+  // Nanosecond remainder of the realtime clock.
+  optional uint32 nanosecond = 4;
+
+  // Monotonic device uptime in milliseconds.
+  fixed64 uptime_ms = 5;
+}
+
+// Fetch the current clock configuration.
+message ClockConfigGetRequest {}
+
+// Current effective clock configuration.
+message ClockConfigGetResponse {
+  ClockConfig config = 1;
+}
+
+// Replace the full clock configuration.
+message ClockConfigSetRequest {
+  ClockConfig config = 1;
+}
+
+// Effective clock configuration after validation/application.
+message ClockConfigSetResponse {
+  ClockConfig config = 1;
+}
+
+// Restore clock configuration defaults.
+message ClockConfigResetRequest {}
+
+// Effective clock configuration after reset.
+message ClockConfigResetResponse {
+  ClockConfig config = 1;
+}
+
+// Set the device's current wall-clock time.
+message ClockTimeSetRequest {
+  // UTC Unix epoch time in milliseconds.
+  fixed64 unix_time_ms = 1;
+}
+
+// Result after applying a wall-clock time update.
+message ClockTimeSetResponse {
+  bool accepted = 1;
+
+  // UTC Unix epoch time in milliseconds after applying the update.
+  fixed64 unix_time_ms = 2;
+}

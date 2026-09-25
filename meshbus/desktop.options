@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*DesktopMgmtGroupId int_size:8
+*DesktopMgmtCommandId int_size:8
+*DesktopMbaState int_size:8
+*DesktopMbaStartRequest.app_id max_length:31
+*DesktopMbaStartRequest.path max_length:191
+*DesktopMbaResponse.app_id max_length:31
+*DesktopMbaResponse.path max_length:191
+*DesktopPackageAction int_size:8
+*DesktopPackageRequest.app_id max_length:31
+*DesktopPackageRequest.manifest_path max_length:191
+*DesktopPackageResponse.app_id max_length:31
+*DesktopPackageResponse.state max_length:31
+*DesktopPackageResponse.current_bundle max_length:64
+*DesktopPackageResponse.pending_bundle max_length:64
+*DesktopPackageResponse.previous_bundle max_length:64
+*DesktopPackageResponse.mba_path max_length:191
+*DesktopPackageRequest.bundle max_length:64

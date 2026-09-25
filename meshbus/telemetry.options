@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*TelemetryMgmtGroupId int_size:8
+*TelemetryMgmtCommandId int_size:8
+*TelemetryChannelId int_size:8
+*TelemetryStatusResponse.channels max_count:16
+*TelemetryReadResponse.value_count int_size:8
+*TelemetryReadResponse.values max_count:4

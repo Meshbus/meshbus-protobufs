@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*IndicatorMgmtGroupId int_size:8
+*IndicatorMgmtCommandId int_size:8
+*IndicatorLightPlayRequest.count int_size:8
+*IndicatorLightColorRequest.r int_size:8
+*IndicatorLightColorRequest.g int_size:8
+*IndicatorLightColorRequest.b int_size:8
+*IndicatorLightIdleColorRequest.r int_size:8
+*IndicatorLightIdleColorRequest.g int_size:8
+*IndicatorLightIdleColorRequest.b int_size:8
+*IndicatorBuzzerPlayRequest.freq_hz int_size:16
+*IndicatorBuzzerPlayRequest.duration_ms int_size:16
+*IndicatorBuzzerRtttlRequest.rtttl max_size:481

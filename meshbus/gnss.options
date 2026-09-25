@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+
+*GnssState int_size:8
+*GnssFixStatus int_size:8
+*GnssFixQuality int_size:8
+*GnssSystem int_size:16
+*GnssConfig.nav_mode int_size:8
+*GnssConfig.fix_rate int_size:8
+*GnssSatellite.prn int_size:8
+*GnssSatellite.system int_size:16
+*GnssSatellite.snr_db int_size:8
+*GnssSatellite.elevation_deg int_size:8
+*GnssSatellite.azimuth_deg int_size:16
+*GnssMgmtGroupId int_size:8
+*GnssMgmtCommandId int_size:8
+*GnssHeadingSource int_size:8
+*GnssHeadingState int_size:8
+*GnssHeadingAccuracy int_size:8
+*GnssHeadingCalibrationHint int_size:8
+*GnssStatusResponse.state int_size:8
+*GnssStatusResponse.fix_status int_size:8
+*GnssStatusResponse.fix_quality int_size:8
+*GnssStatusResponse.tracked_satellites_count int_size:8
+*GnssStatusResponse.satellites max_count:64
