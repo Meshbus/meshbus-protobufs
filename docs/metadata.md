@@ -28,9 +28,10 @@ representable value. For example:
 
 - Channel secrets have a 32-byte capacity, but the current service accepts
   exactly 16 or 32 bytes.
-- `Contact.management_secret` has a 64-byte Nanopb payload capacity;
-  the management service profile limits credentials to 8..16 bytes. Do not infer
-  a 64-character password limit.
+- `Contact.management_secret` has a 16-byte Nanopb payload capacity.
+  Nonempty credentials must contain 8..16 printable ASCII bytes (0x21..0x7e);
+  empty represents no supplied credential, with update behavior defined in
+  [Field semantics](field-semantics.md).
 - A public-key prefix has capacity 5; firmware chooses its exact width, normally
   4, through `CONFIG_MBS_CONTACT_PREFIX_BYTES` (supported range 3..5).
 - A message can fit its field buffers but still exceed the selected transport's
@@ -45,5 +46,5 @@ endpoint. Bounds alone do not validate UTF-8 or authenticate a message.
 
 Update the `.proto`, matching `.options`, field comments and consumer checks in
 one change. Review reductions in accepted sizes/counts, widened generated
-structures and changed integer ranges even if `buf breaking` passes. See the
-four compatibility surfaces in [Release](release.md).
+structures and changed integer ranges. Generate and validate the affected
+consumers against the same schema revision; see [Release](release.md).

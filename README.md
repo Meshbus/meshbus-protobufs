@@ -5,9 +5,9 @@ and loadable applications. Firmware, CLI, desktop and mobile clients can
 generate bindings from the same schema. The definitions cover MeshCore protocol
 operations and device services.
 
-**Status: pre-stable.** No stable compatibility baseline has been declared. Pin a
-reviewed commit or public release tag and read [the changelog](CHANGELOG.md) when
-updating. See [Release](docs/release.md) for the public compatibility policy.
+This is the initial Meshbus schema contract. Pin a reviewed commit or release
+tag and generate all consumers from that revision. See [Release](docs/release.md)
+for validation and publication requirements.
 
 This repository ships schema source and bounded-field metadata, not generated
 SDKs or a gRPC server. Consumers own generation, runtimes and packaging. The

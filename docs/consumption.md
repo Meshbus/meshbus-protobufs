@@ -16,8 +16,8 @@ git checkout --detach "$schema_ref"
 git rev-parse HEAD
 ```
 
-There is no stable release baseline declared yet. Select an actual reviewed
-commit; do not copy the placeholder as a revision or assume a v1.0.0 tag exists.
+Select an actual reviewed commit or release tag; replace the placeholder with
+the revision used by your firmware and other consumers.
 
 ## Toolchain
 

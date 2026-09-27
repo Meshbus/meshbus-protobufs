@@ -57,8 +57,7 @@ message ManagementSmpExchangeRequest {
   // Remote command id within `group`.
   uint32 command = 3;
 
-  // Request operation: 0 = read, 1 = write. Firmware also accepts raw SMP
-  // write op 2 for compatibility with lower-level clients.
+  // Raw SMP request operation: 0 = read, 2 = write.
   uint32 op = 4;
 
   // Contiguous chunk of the raw SMP CBOR payload, excluding the 8-byte SMP
@@ -70,10 +69,9 @@ message ManagementSmpExchangeRequest {
   // persisted.
   bytes secret = 6;
 
-  // Total raw SMP CBOR payload length. Zero preserves the one-request form and
-  // treats `payload` as complete. A larger value starts or continues a
-  // RAM-only upload so an inner 608-byte SMP packet can pass through a
-  // 608-byte outer UART SMP transport.
+  // Total raw SMP CBOR payload length. Zero treats `payload` as complete.
+  // A larger value starts or continues a RAM-only upload so an inner
+  // 608-byte SMP packet can pass through a 608-byte outer UART SMP transport.
   uint32 total_length = 7;
 
   // Byte offset of `payload` within the complete raw SMP CBOR payload.

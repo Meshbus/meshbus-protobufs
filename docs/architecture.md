@@ -35,9 +35,9 @@ completion. Notify can prompt follow-up queries rather than duplicate full
 service state. Bearer-specific delivery guarantees belong in the transport
 contract, not in assumptions about protobuf reliability.
 
-## Evolution
+## Current contract
 
 The package namespace is `meshbus`, without a version suffix.
-Follow [Release](release.md) for public baselines and the four compatibility
-surfaces. Keep bounds, comments and consumers aligned; a descriptor compile or
-Buf compatibility pass alone does not establish runtime interoperability.
+Keep bounds, comments and consumers aligned with this initial contract.
+Follow [Release](release.md) for validation and publication. Descriptor
+compilation alone does not establish runtime interoperability.

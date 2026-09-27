@@ -99,17 +99,17 @@ message Contact {
   sint32 last_seen_snr = 11;
 
   // Path hash size used when decoding/encoding `out_path`.
-  // 0 means unknown or legacy data.
+  // 0 means unknown.
   uint32 path_hash_size = 12;
 
   // Local alias/override name for UI display.
   string alias = 13;
 
   // Per-contact credential used by clients that manage this node over
-  // authenticated management bearers. Product-facing clients present it as an
-  // 8-to-16-character management password. Empty means no credential is stored
-  // for this contact. The Nanopb payload capacity is 64 bytes; that storage
-  // capacity does not define the accepted management password length.
+  // authenticated management bearers. Product-facing clients present it as a
+  // management password of 8..16 printable ASCII bytes (0x21..0x7e).
+  // Empty means no credential is stored for this contact. The Nanopb payload
+  // capacity is 16 bytes.
   bytes management_secret = 14;
 }
 

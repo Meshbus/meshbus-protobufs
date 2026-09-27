@@ -39,7 +39,7 @@ input may reject them. Optional field presence can be significant.
 
 Inspect the SMP response header and CBOR error envelope before decoding `data`.
 An SMP error is not a protobuf response containing default-valued success fields.
-The MCUmgr version determines whether the error is a legacy `rc` or a grouped
+The MCUmgr version determines whether the error is an `rc` or a grouped
 `err` map. Do not assume internal negative errno values and SMP error numbers
 are interchangeable.
 
@@ -50,7 +50,7 @@ are interchangeable.
 | SMP/CBOR error | Request dispatch, decoding, authorization or handler failure; do not decode a success protobuf |
 | `FirmwareResponse.result` | Firmware service result; inspect `state`, `detail` and retry flags too |
 | `DesktopPackageResponse.detail`, `ManagementSmpResultResponse.status` | Zero or a negative target errno; nonzero is a business failure even in a successful SMP response |
-| `accepted`, `triggered`, `started` | Only the guarantee documented for that operation; an asynchronous queue acknowledgment is not remote completion |
+| `accepted`, `triggered` | Only the guarantee documented for that operation; an asynchronous queue acknowledgment is not remote completion |
 
 An SMP sequence identifies a transport request/response pair. A management
 `tag`, message `ack_token`, upload `transfer_id`, MBA `session_id`, and display
@@ -59,9 +59,8 @@ Read [Workflows](workflows.md) before retrying state-changing commands.
 
 ## Remote SMP tunneling
 
-`ManagementSmpExchangeRequest.op` is a convenience selector: 0 means read,
-1 means write, and the firmware also accepts raw write operation 2. In
-particular, value 1 here does **not** mean READ_RESPONSE.
+`ManagementSmpExchangeRequest.op` uses raw SMP request operations: READ=0 and
+WRITE=2. Response operation values are invalid in requests.
 
 Its `payload` is the target command's raw CBOR body, excluding the inner SMP
 header. For a Meshbus target that body itself contains a protobuf `data` entry;

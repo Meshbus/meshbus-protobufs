@@ -2,7 +2,7 @@
 
 This table defines the management command mapping for the schemas. All message
 names belong to `meshbus`.
-The operation is a raw SMP READ (0) or WRITE (2), not the remote-tunnel selector.
+The operation is a raw SMP READ (0) or WRITE (2), including remote SMP requests.
 Feature-disabled commands may reject requests. See [Transport](protocol.md)
 for framing and error handling, and [Workflows](workflows.md) before mutations.
 

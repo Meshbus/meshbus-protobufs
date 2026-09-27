@@ -228,10 +228,6 @@ message RadioContinuousWaveRequest {
 
 // Result of an asynchronous continuous-wave submission.
 message RadioContinuousWaveResponse {
-  // Deprecated compatibility field. This indicates acceptance, not driver
-  // start or RF completion.
-  bool started = 1 [deprecated = true];
-
   // True when the request was accepted for asynchronous execution.
-  bool accepted = 2;
+  bool accepted = 1;
 }

@@ -64,7 +64,8 @@ Desktop MBA, Desktop package and LLEXT host-info responses currently use
 `protocol_version = 1`. These versions describe those endpoints, not a global
 schema version or a proof that all groups are enabled. Reject an unsupported
 version before mutation. `metadata_version` and `interface_abi` are separate MBA
-compatibility fields, and `image_sha256` identifies the installed host image.
+format and host-interface fields, and `image_sha256` identifies the installed
+host image.
 A hash match is not a signature-verification assertion.
 
 A field's presence in the schema does not guarantee endpoint support.
