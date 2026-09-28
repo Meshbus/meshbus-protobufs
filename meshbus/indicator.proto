@@ -41,6 +41,12 @@ message IndicatorConfig {
   message LightFeedback {
     // Enable idle heartbeat light feedback.
     bool heartbeat_enabled = 1;
+
+    // Enable received and outgoing message light feedback.
+    bool message_enabled = 2;
+
+    // Enable startup, pairing, fault and low-battery light feedback.
+    bool system_enabled = 3;
   }
 
   // Per-category buzzer feedback routing.
@@ -51,9 +57,12 @@ message IndicatorConfig {
     // Enable buzzer feedback for received channel messages.
     bool channel_message_enabled = 2;
 
-    // Enable buzzer feedback for system events such as key actions and
-    // explicit buzzer playback commands.
+    // Enable send results, peer ACKs, startup, pairing, battery/fault alerts
+    // and explicit system tones.
     bool system_enabled = 3;
+
+    // Enable key and encoder sounds independently of system alerts.
+    bool input_enabled = 4;
   }
 
   // Master enable for light feedback.

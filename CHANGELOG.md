@@ -10,6 +10,8 @@
 - Checks for schema compilation, command coverage, metadata, generated bounds,
   licenses and documentation links.
 - Schema-only Zephyr module discovery and CI validation of the current contract.
+- Indicator preferences separate message/system lights and input sounds;
+  outgoing results and peer ACK sounds follow the system buzzer preference.
 - LLEXT host identity uses target, metadata version and image hash without an
   interface ABI field; build provenance differences are advisory.
 
