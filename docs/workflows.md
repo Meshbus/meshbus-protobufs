@@ -95,10 +95,11 @@ command as safe to retry blindly.
 ## Desktop MBA sessions and packages
 
 MBA means Meshbus Application; LLEXT is Zephyr's Linkable Loadable Extension
-mechanism; EDK means Extension Development Kit. Query LLEXT HOST_INFO and match
-`target`, `build_revision`, `metadata_version`, `interface_abi` and
-`image_sha256` before selecting an EDK/application. The endpoint protocol version
-is 1. A missing command must not be replaced by a guessed identity.
+mechanism; EDK means Extension Development Kit. Query LLEXT HOST_INFO to select
+an EDK. Applications must match `target` and
+`metadata_version`; differences in `build_revision` or `image_sha256` produce
+a warning and allow execution if required symbols and relocation succeed.
+The endpoint protocol version is 1. A missing command must not be replaced by a guessed identity.
 
 For a foreground session, submit MBA_START, retain its `session_id`, and poll
 MBA_STATUS. ID 0 selects the latest session; a stale nonzero ID is rejected.
@@ -127,9 +128,9 @@ The record is at most 32768 bytes. Its schema-1 fields are:
 | --- | --- |
 | `schema`, `operation`, `purge_saves` | 1, 0 and false for a new installation; operation 1/2 are recovery records for rollback/uninstall |
 | `id`, `version` | App ID: starts with lowercase letter, then lowercase letters/digits/underscore/hyphen/dot, at most 31 bytes; nonempty version at most 15 bytes |
-| `bundle`, `image` | 64 lowercase hex digits: package identity and exact host image hash |
-| `target`, `firmware` | Target and build revision matching HOST_INFO |
-| `metadata_version`, `interface_abi` | Positive values matching the installed host |
+| `bundle`, `image` | Package hash and build-time firmware image hash (64 lowercase hex digits); image may be empty when unknown |
+| `target`, `firmware` | Matching target and advisory build-time firmware revision |
+| `metadata_version` | Supported MBA format version matching the installed host |
 | `mba_path` | Path to the single `.mba` entry in `files` |
 | `atomic` | Whether files are placed under a versioned package root |
 | `files` | 1..32 entries with `path`, integer `length` (0..64 MiB) and 64-lowercase-hex `sha256` |

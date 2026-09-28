@@ -10,6 +10,8 @@
 - Checks for schema compilation, command coverage, metadata, generated bounds,
   licenses and documentation links.
 - Schema-only Zephyr module discovery and CI validation of the current contract.
+- LLEXT host identity uses target, metadata version and image hash without an
+  interface ABI field; build provenance differences are advisory.
 
 Repository-owned material uses Apache-2.0. See [LICENSE](LICENSE) and the
 [release policy](docs/release.md). Generated bindings and runtime libraries are
